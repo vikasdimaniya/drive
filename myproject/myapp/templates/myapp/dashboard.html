@@ -1,15 +1,103 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Dashboard</title>
 </head>
+
 <body>
     <h2>Welcome, {{ user.username }}!</h2>
     <p>You are logged in.</p>
+    <input type="file" id="fileInput">
+    <button onclick="startUpload()">Upload</button>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <script>
+        function getCSRFToken() {
+            return document.cookie.split("; ")
+                .find(row => row.startsWith("csrftoken="))
+                ?.split("=")[1];
+        }
+    </script>
+
+    <script>
+        async function startUpload() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a file!");
+                return;
+            }
+
+            // Starting multipart upload
+            const csrfToken = getCSRFToken();
+            let response = await fetch("/api/upload/multipart/start/", {
+                method: "POST",
+                body: JSON.stringify({ file_name: file.name }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+            });
+
+            let { upload_id } = await response.json();
+            let chunkSize = 5 * 1024 * 1024; // 5MB per part
+            let totalParts = Math.ceil(file.size / chunkSize);
+            let uploadedParts = [];
+
+            // Uploading each part
+            for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+                let start = (partNumber - 1) * chunkSize;
+                let end = Math.min(start + chunkSize, file.size);
+                let filePart = file.slice(start, end);
+
+                // Getting presigned URL
+                let presignedResp = await fetch("/api/upload/multipart/part/", {
+                    method: "POST",
+                    body: JSON.stringify({ file_name: file.name, upload_id, part_number: partNumber }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken
+                    },
+                });
+
+                let { presigned_url } = await presignedResp.json();
+
+                // Uploading chunk
+                let uploadResponse = await fetch(presigned_url, {
+                    method: "PUT",
+                    body: filePart,
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+                }
+                let etag = uploadResponse.headers.get("ETag");
+                uploadedParts.push({ PartNumber: partNumber, ETag: etag });
+
+                // Update progress bar
+                let progress = Math.round((partNumber / totalParts) * 100);
+                document.getElementById("progressBar").value = progress;
+            }
+
+            // Completing the upload
+            await fetch("/api/upload/multipart/complete/", {
+                method: "POST",
+                body: JSON.stringify({ file_name: file.name, upload_id, parts: uploadedParts }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+            });
+
+            alert("Upload complete!");
+        }
+    </script>
     <form action="{% url 'logout' %}" method="post">
-    {% csrf_token %}
-    <button type="submit">Logout</button>
-</form>
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
 
 </body>
+
 </html>

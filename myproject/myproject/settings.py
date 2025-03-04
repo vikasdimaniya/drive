@@ -100,6 +100,8 @@ LOGOUT_REDIRECT_URL = '/login/'  # Redirect after logout
 
 LOGIN_URL = "/login/"
 
+SESSION_COOKIE_AGE = 86400  # 1 day
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
