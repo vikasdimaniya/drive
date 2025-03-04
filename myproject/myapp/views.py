@@ -78,3 +78,41 @@ def complete_multipart_upload(request):
         MultipartUpload={"Parts": parts},
     )
     return JsonResponse({"message": "Upload completed", "location": response["Location"]})
+
+@login_required
+def list_user_files(request):
+    """List all files uploaded by the logged-in user (without pre-signed URLs)"""
+    user_id = request.user.id
+    prefix = f"{user_id}/"
+
+    response = s3_client.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=prefix)
+
+    files = []
+    for obj in response.get("Contents", []):
+        file_key = obj["Key"]
+        files.append({"name": file_key.replace(prefix, ""), "key": file_key})
+
+    return JsonResponse({"files": files})
+
+@login_required
+def get_presigned_url(request):
+    """Generate a pre-signed URL for downloading a user's file"""
+    data = json.loads(request.body)
+    file_key = data.get("file_key")
+
+    if not file_key:
+        return JsonResponse({"error": "Missing file key"}, status=400)
+
+    # Ensure the user is accessing only their own files
+    user_id = request.user.id
+    if not file_key.startswith(f"{user_id}/"):
+        return JsonResponse({"error": "Unauthorized access"}, status=403)
+
+    # Generate pre-signed URL
+    presigned_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": file_key},
+        ExpiresIn=3600,  # 1-hour expiration
+    )
+
+    return JsonResponse({"presigned_url": presigned_url})

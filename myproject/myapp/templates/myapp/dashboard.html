@@ -18,6 +18,87 @@
                 ?.split("=")[1];
         }
     </script>
+    <h3>Your Uploaded Files</h3>
+    <ul id="fileList">
+        <li>Loading...</li>
+    </ul>
+
+    <script>
+        function getCSRFToken() {
+            return document.cookie.split("; ")
+                .find(row => row.startsWith("csrftoken="))
+                ?.split("=")[1];
+        }
+        const csrfToken = getCSRFToken() || "";
+
+        // Load the user's file list on page load
+        document.addEventListener("DOMContentLoaded", fetchUserFiles);
+
+        async function fetchUserFiles() {
+            let response = await fetch("/api/user/files/");
+            let data = await response.json();
+            let fileList = document.getElementById("fileList");
+
+            fileList.innerHTML = "";  // Clear existing list
+
+            if (data.files.length === 0) {
+                fileList.innerHTML = "<li>No files uploaded yet.</li>";
+                return;
+            }
+
+            data.files.forEach(file => {
+                let listItem = document.createElement("li");
+
+                let fileNameSpan = document.createElement("span");
+                fileNameSpan.innerText = file.name + " ";
+
+                let downloadButton = document.createElement("button");
+                downloadButton.innerText = "Download";
+                downloadButton.dataset.fileKey = file.key;
+                downloadButton.addEventListener("click", downloadFile);
+
+                listItem.appendChild(fileNameSpan);
+                listItem.appendChild(downloadButton);
+                fileList.appendChild(listItem);
+            });
+        }
+
+        async function downloadFile(event) {
+            event.preventDefault();
+
+            let fileKey = event.target.dataset.fileKey;
+
+            try {
+                let response = await fetch("/api/user/file-url/", {
+                    method: "POST",
+                    body: JSON.stringify({ file_key: fileKey }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken
+                    },
+                });
+
+                let data = await response.json();
+                if (data.presigned_url) {
+                    let tempLink = document.createElement("a");
+                    tempLink.href = data.presigned_url;
+                    tempLink.style.display = "none";
+                    tempLink.download = fileKey.split('/').pop(); // Extracts file name
+
+                    document.body.appendChild(tempLink);
+                    tempLink.click();  // Force browser to start download
+                    document.body.removeChild(tempLink); // Cleanup
+                } else {
+                    alert("Failed to generate download link.");
+                }
+            } catch (error) {
+                console.error("Error fetching pre-signed URL:", error);
+            }
+        }
+
+    </script>
+
+
 
     <script>
         async function startUpload() {
