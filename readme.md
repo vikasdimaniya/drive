@@ -1,3 +1,4 @@
+# SETUP
 SET ENVIRONMENT>   
 python3 -m venv env   
 source env/bin/activate   
@@ -39,4 +40,9 @@ CREATE DATABASE DRIVE OWNER postgres;
 SETUP django admin user: use username as root and password as root, you will have to enter password twice
 python manage.py migrate
 python manage.py createsuperuser
+python manage.py runserver
+
+# Run Project
+source env/bin/activate
+cd myproject
 python manage.py runserver

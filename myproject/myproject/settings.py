@@ -54,7 +54,7 @@ ROOT_URLCONF = "myproject.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "myapp" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -94,6 +94,9 @@ AWS_STORAGE_BUCKET_NAME = "mybucket"  # Create this in MinIO
 AWS_S3_ADDRESSING_STYLE = "path"
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+LOGIN_REDIRECT_URL = '/dashboard/'  # Redirect after login
+LOGOUT_REDIRECT_URL = '/login/'  # Redirect after logout
 
 
 # Password validation
