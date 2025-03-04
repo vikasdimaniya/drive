@@ -116,3 +116,25 @@ def get_presigned_url(request):
     )
 
     return JsonResponse({"presigned_url": presigned_url})
+
+@login_required
+def delete_user_file(request):
+    """Delete a specific file uploaded by the user"""
+    data = json.loads(request.body)
+    file_key = data.get("file_key")
+
+    if not file_key:
+        return JsonResponse({"error": "File key is required"}, status=400)
+
+    user_id = request.user.id
+    if not file_key.startswith(f"{user_id}/"):
+        return JsonResponse({"error": "Unauthorized access"}, status=403)
+
+    try:
+        s3_client.delete_object(
+            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            Key=file_key,
+        )
+        return JsonResponse({"message": "File deleted successfully"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

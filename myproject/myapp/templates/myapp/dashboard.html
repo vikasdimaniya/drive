@@ -49,16 +49,25 @@
             data.files.forEach(file => {
                 let listItem = document.createElement("li");
 
+                // Display file name as plain text
                 let fileNameSpan = document.createElement("span");
                 fileNameSpan.innerText = file.name + " ";
 
+                // Create "Download" button
                 let downloadButton = document.createElement("button");
                 downloadButton.innerText = "Download";
                 downloadButton.dataset.fileKey = file.key;
                 downloadButton.addEventListener("click", downloadFile);
 
+                // Create "Delete" button
+                let deleteButton = document.createElement("button");
+                deleteButton.innerText = "Delete";
+                deleteButton.dataset.fileKey = file.key;
+                deleteButton.addEventListener("click", deleteFile);
+
                 listItem.appendChild(fileNameSpan);
                 listItem.appendChild(downloadButton);
+                listItem.appendChild(deleteButton);
                 fileList.appendChild(listItem);
             });
         }
@@ -96,6 +105,34 @@
             }
         }
 
+        async function deleteFile(event) {
+            event.preventDefault();
+
+            let fileKey = event.target.dataset.fileKey;
+            let confirmation = confirm("Are you sure you want to delete this file?");
+            if (!confirmation) return;
+
+            try {
+                let response = await fetch("/api/user/delete-file/", {
+                    method: "POST",
+                    body: JSON.stringify({ file_key: fileKey }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken
+                    },
+                });
+
+                let data = await response.json();
+                if (data.message === "File deleted successfully") {
+                    alert("File deleted successfully.");
+                    fetchUserFiles();
+                } else {
+                    alert("Failed to delete file: " + data.error);
+                }
+            } catch (error) {
+                console.error("Error deleting file:", error);
+            }
+        }
     </script>
 
 
