@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, list_user_files, get_presigned_url, delete_user_file
+from .views import dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, list_user_files, get_presigned_url, delete_user_file, search_user_files
 
 urlpatterns = [
 
@@ -19,6 +19,9 @@ urlpatterns = [
     # List user files
     path("api/user/files/", list_user_files, name="list-user-files"),
     path("api/user/file-url/", get_presigned_url, name="get-presigned-url"),
+
+    # search user files
+    path("api/user/search-files/", search_user_files, name="search-user-files"),
 
     # Delete user file
     path("api/user/delete-file/", delete_user_file, name="delete-user-file"),

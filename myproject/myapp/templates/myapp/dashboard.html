@@ -23,6 +23,12 @@
         <li>Loading...</li>
     </ul>
 
+    <!-- Search Section -->
+    <h3>Search Files</h3>
+    <input type="text" id="searchQuery" placeholder="Search files...">
+    <button onclick="searchFiles()">Search</button>
+    <ul id="searchResults"></ul>
+
     <script>
         function getCSRFToken() {
             return document.cookie.split("; ")
@@ -131,6 +137,50 @@
                 }
             } catch (error) {
                 console.error("Error deleting file:", error);
+            }
+        }
+
+        function createFileListItem(file) {
+            let listItem = document.createElement("li");
+            let fileNameSpan = document.createElement("span");
+            fileNameSpan.innerText = file.name + " ";
+
+            let downloadButton = document.createElement("button");
+            downloadButton.innerText = "Download";
+            downloadButton.dataset.fileKey = file.key;
+            downloadButton.addEventListener("click", downloadFile);
+
+            let deleteButton = document.createElement("button");
+            deleteButton.innerText = "Delete";
+            deleteButton.dataset.fileKey = file.key;
+            deleteButton.addEventListener("click", deleteFile);
+
+            listItem.appendChild(fileNameSpan);
+            listItem.appendChild(downloadButton);
+            listItem.appendChild(deleteButton);
+            return listItem;
+        }
+        // Search files
+        async function searchFiles() {
+            const query = document.getElementById("searchQuery").value;
+            if (!query) return;
+
+            try {
+                let response = await fetch(`/api/user/search-files/?query=${query}`);
+                let data = await response.json();
+                let resultsList = document.getElementById("searchResults");
+                resultsList.innerHTML = "";
+
+                if (data.files.length === 0) {
+                    resultsList.innerHTML = "<li>No matching files found.</li>";
+                    return;
+                }
+
+                data.files.forEach(file => {
+                    resultsList.appendChild(createFileListItem(file));
+                });
+            } catch (error) {
+                console.error("Error searching files:", error);
             }
         }
     </script>

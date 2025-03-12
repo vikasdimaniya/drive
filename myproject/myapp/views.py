@@ -5,6 +5,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from myapp.models import FileMetadata
 
 # Initializing MinIO client
 s3_client = boto3.client(
@@ -77,6 +78,26 @@ def complete_multipart_upload(request):
         UploadId=upload_id,
         MultipartUpload={"Parts": parts},
     )
+
+    # Fetch file metadata from S3
+    head_object = s3_client.head_object(
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file_name
+    )
+    file_size = head_object["ContentLength"]
+    file_type = head_object["ContentType"]
+
+    # Store metadata in the database
+    try:
+        FileMetadata.objects.create(
+            user=request.user,
+            file_name=file_name.split("/")[-1],
+            file_path=f"{request.user.id}/{file_name.split('/')[-1]}",
+            file_size=file_size,
+            file_type=file_type,
+        )
+    except Exception as e:
+        return JsonResponse({"error": f"Metadata storage failed: {str(e)}"}, status=500)
+
     return JsonResponse({"message": "Upload completed", "location": response["Location"]})
 
 @login_required
@@ -135,6 +156,29 @@ def delete_user_file(request):
             Bucket=settings.AWS_STORAGE_BUCKET_NAME,
             Key=file_key,
         )
+
+        # Delete metadata from the database
+        existing_metadata = FileMetadata.objects.filter(user=request.user, file_path=file_key)
+        if existing_metadata.exists():
+            deleted_count, _ = existing_metadata.delete()
+
         return JsonResponse({"message": "File deleted successfully"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@login_required
+def search_user_files(request):
+    """Search for a file uploaded by the logged-in user"""
+    query = request.GET.get("query", "").lower().strip()
+
+    if not query:
+        return JsonResponse({"error": "Query parameter is required"}, status=400)
+
+    user_files = FileMetadata.objects.filter(user=request.user, file_name__icontains=query).values(
+        "file_name", "file_path"
+    )
+
+    files = [{"name": file["file_name"], "key": file["file_path"]} for file in user_files]
+    return JsonResponse({"files": files})
+
+
