@@ -99,3 +99,28 @@ mc admin service restart node1 &&
 mc admin service restart node2 &&
 mc admin service restart node3 &&
 mc admin service restart node4
+
+# Troubleshooting Shared Files
+
+If you're experiencing issues with shared files not appearing in the "Shared with me" section, you can use the following management commands to diagnose and fix the problem:
+
+## Check Shared Links
+
+This command displays all shared links in the database and their status:
+
+```
+python myproject/manage.py check_shared_links
+```
+
+## Fix Shared Links
+
+This command finds shared links that are not properly associated with user accounts and fixes them:
+
+```
+python myproject/manage.py fix_shared_links
+```
+
+# Run Project
+source env/bin/activate
+cd myproject
+python manage.py runserver

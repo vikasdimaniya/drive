@@ -7,6 +7,14 @@ class Command(BaseCommand):
     help = 'Fix shared links by associating them with the correct users'
 
     def handle(self, *args, **options):
+        """
+        This command finds shared links that are not properly associated with user accounts
+        and fixes them by setting the shared_with field to the correct user.
+        
+        It's useful for fixing issues where shared files don't appear in the "Shared with me" section.
+        
+        Usage: python manage.py fix_shared_links
+        """
         # Get all users
         users = User.objects.all()
         self.stdout.write(f"Total users: {users.count()}")
