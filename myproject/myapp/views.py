@@ -41,7 +41,54 @@ def signup(request):
 
 @login_required
 def dashboard(request):
+    # Associate any shared files with the current user
+    associate_shared_files_with_user(request.user)
     return render(request, 'myapp/dashboard.html')
+
+@login_required
+def refresh_shared_files(request):
+    """Manually refresh the association of shared files with the current user"""
+    if request.method != 'POST':
+        return JsonResponse({"error": "Only POST method is allowed"}, status=405)
+    
+    # Associate shared files with the current user
+    count = associate_shared_files_with_user(request.user)
+    
+    return JsonResponse({
+        "message": "Shared files refreshed successfully",
+        "associated_files": count
+    })
+
+def associate_shared_files_with_user(user):
+    """Associate any shared files with the user's account based on email"""
+    if not user.email and not user.username:
+        return 0
+    
+    # Find shared links that match the user's email OR username but aren't associated with the user
+    query = Q()
+    if user.email:
+        query |= Q(shared_with_email=user.email)
+    
+    # Also try with username as email (for users without explicit email set)
+    query |= Q(shared_with_email=user.username)
+    
+    shared_links = SharedLink.objects.filter(
+        query,
+        shared_with__isnull=True,
+        is_active=True
+    )
+    
+    # Log the number of links found
+    count = shared_links.count()
+    print(f"Found {count} unassociated shared links for user {user.username} with email {user.email}")
+    
+    # Associate each link with the user
+    for link in shared_links:
+        link.shared_with = user
+        link.save()
+        print(f"Associated shared file '{link.file.file_name}' with user {user.username}")
+    
+    return count
 
 # Multipart upload routes
 @login_required
@@ -343,10 +390,18 @@ def create_shared_link(request):
     # Check if recipient is a registered user
     recipient_user = None
     try:
+        # Try to find user by email first
         recipient_user = User.objects.get(email=recipient_email)
+        print(f"Found recipient user by email: {recipient_user.username}")
     except User.DoesNotExist:
-        # If not a registered user, we'll just store their email
-        pass
+        try:
+            # If not found by email, try by username
+            recipient_user = User.objects.get(username=recipient_email)
+            print(f"Found recipient user by username: {recipient_user.username}")
+        except User.DoesNotExist:
+            # If not a registered user, we'll just store their email
+            print(f"Recipient user not found for email/username: {recipient_email}")
+            pass
     
     # Create a shared link
     shared_link = SharedLink.objects.create(
@@ -424,15 +479,28 @@ def access_shared_file(request, token):
 @login_required
 def list_shared_with_me(request):
     """List all files shared with the logged-in user"""
-    # Get files shared directly with the user
+    # Get the current user's email
+    user_email = request.user.email
+    
+    # Log debugging information
+    print(f"Searching for files shared with user: {request.user.username}, email: {user_email}")
+    
+    # Get files shared directly with the user (by user ID or email)
     shared_links = SharedLink.objects.filter(
-        Q(shared_with=request.user) | Q(shared_with_email=request.user.email),
+        Q(shared_with=request.user) | Q(shared_with_email=user_email),
         is_active=True
     ).select_related('file', 'owner')
     
+    # Log the number of shared links found
+    print(f"Found {shared_links.count()} shared links for user {request.user.username}")
+    
     files = []
     for link in shared_links:
+        # Check if the link is valid (not expired)
         if link.is_valid:
+            # Log each valid shared link
+            print(f"Valid shared link: {link.file.file_name} shared by {link.owner.username}")
+            
             files.append({
                 "name": link.file.file_name,
                 "key": link.file.file_path,
@@ -441,7 +509,11 @@ def list_shared_with_me(request):
                 "expires_at": link.expires_at.isoformat() if link.expires_at else None,
                 "token": str(link.token)
             })
+        else:
+            # Log invalid links for debugging
+            print(f"Invalid shared link: {link.file.file_name} (expired or inactive)")
     
+    # Return the list of files
     return JsonResponse({"files": files})
 
 @login_required

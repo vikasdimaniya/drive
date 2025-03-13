@@ -134,7 +134,12 @@
                     
                     <div class="shared-content active" id="sharedWithMeContent">
                         <div class="files-section">
-                            <h3><i class="fas fa-share-alt"></i> Files Shared with You</h3>
+                            <h3>
+                                <i class="fas fa-share-alt"></i> Files Shared with You
+                                <button id="refreshSharedFilesBtn" class="refresh-btn" title="Click to refresh shared files. This will check for any files that have been shared with you but aren't showing up.">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </h3>
                             <div id="sharedWithMeContainer" class="files-container view-list">
                                 <div class="empty-message">Loading shared files...</div>
                             </div>

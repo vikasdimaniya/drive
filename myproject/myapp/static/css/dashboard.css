@@ -144,11 +144,44 @@
     margin-right: 10px;
 }
 
+/* Help text */
+.help-text {
+    font-size: 0.9em;
+    color: #0078D7;
+    margin-top: 10px;
+}
+
+/* Empty message */
 .empty-message {
     text-align: center;
     padding: 30px;
     color: #777;
     font-style: italic;
+}
+
+.empty-message p {
+    margin: 5px 0;
+}
+
+/* Error message */
+.error-message {
+    padding: 20px;
+    text-align: center;
+    color: #e74c3c;
+    background-color: #fdf3f2;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.error-message p {
+    margin: 5px 0;
+}
+
+/* Loading message */
+.loading-message {
+    padding: 20px;
+    text-align: center;
+    color: #666;
 }
 
 /* Modal styles */
@@ -398,17 +431,6 @@
     opacity: 0.7;
 }
 
-/* Loading and error messages */
-.loading-message, .error-message {
-    padding: 20px;
-    text-align: center;
-    color: #666;
-}
-
-.error-message {
-    color: #e74c3c;
-}
-
 /* Content sections */
 .content-section {
     display: none;
@@ -604,4 +626,37 @@
 .pagination-controls {
     display: flex;
     align-items: center;
+}
+
+/* Refresh button */
+.refresh-btn {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    color: #0078D7;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.refresh-btn i {
+    margin-right: 5px;
+}
+
+.refresh-btn:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.05);
+}
+
+.refresh-btn.spinning i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 } 

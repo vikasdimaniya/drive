@@ -193,6 +193,40 @@ window.initShare = function() {
             loadSharedByMe();
         });
     }
+    
+    // Add refresh button functionality
+    const refreshSharedFilesBtn = document.getElementById('refreshSharedFilesBtn');
+    if (refreshSharedFilesBtn) {
+        refreshSharedFilesBtn.addEventListener('click', function() {
+            console.log("Refresh shared files button clicked");
+            // Add spinning animation
+            this.classList.add('spinning');
+            
+            // Make a request to refresh the association of shared files
+            fetch('/api/user/refresh-shared-files/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Shared files refreshed:", data);
+                // Load the shared files again
+                loadSharedWithMe();
+                // Remove spinning animation
+                this.classList.remove('spinning');
+            })
+            .catch(error => {
+                console.error("Error refreshing shared files:", error);
+                // Remove spinning animation
+                this.classList.remove('spinning');
+                // Load the shared files anyway
+                loadSharedWithMe();
+            });
+        });
+    }
 };
 
 /**
@@ -234,21 +268,40 @@ window.revokeAccess = function(token, fileName) {
  */
 window.loadSharedWithMe = function() {
     const container = document.getElementById('sharedWithMeContainer');
-    if (!container) return;
+    if (!container) {
+        console.error("Could not find sharedWithMeContainer element");
+        return;
+    }
     
+    console.log("Loading files shared with current user...");
     container.innerHTML = '<div class="loading-message">Loading shared files...</div>';
     
     fetch('/api/user/shared-with-me/')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.files.length === 0) {
-                container.innerHTML = '<div class="empty-message">No files have been shared with you.</div>';
+            console.log("Shared files data received:", data);
+            
+            if (!data.files || data.files.length === 0) {
+                console.log("No shared files found");
+                container.innerHTML = `
+                    <div class="empty-message">
+                        <p>No files have been shared with you.</p>
+                        <p class="help-text">If you're expecting shared files, try clicking the refresh button above.</p>
+                    </div>`;
                 return;
             }
             
+            console.log(`Found ${data.files.length} shared files`);
             container.innerHTML = '';
             
             data.files.forEach(file => {
+                console.log(`Processing shared file: ${file.name} shared by ${file.shared_by}`);
+                
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.dataset.key = file.key;
@@ -293,7 +346,11 @@ window.loadSharedWithMe = function() {
         })
         .catch(error => {
             console.error('Error loading shared files:', error);
-            container.innerHTML = '<div class="error-message">Error loading shared files. Please try again.</div>';
+            container.innerHTML = `
+                <div class="error-message">
+                    <p>Error loading shared files: ${error.message}</p>
+                    <p>Please try clicking the refresh button above or reload the page.</p>
+                </div>`;
         });
 };
 
