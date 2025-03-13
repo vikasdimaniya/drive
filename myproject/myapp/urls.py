@@ -1,10 +1,11 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, list_user_files, get_presigned_url, delete_user_file, search_user_files
+from .views import dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, list_user_files, get_presigned_url, delete_user_file, search_user_files, signup
 
 urlpatterns = [
 
     # Authentication
+    path('signup/', signup, name='signup'),
     path('login/', auth_views.LoginView.as_view(template_name='myapp/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 

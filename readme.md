@@ -29,6 +29,11 @@ sudo mv minio /usr/local/bin/
 minio start:
 minio server --console-address ":9001" ~/minio-data
 
+minio start multiple servers:
+minio server --console-address ":9001" --address ":9000" ~/minio-data-1 &
+minio server --console-address ":9003" --address ":9002" ~/minio-data-2 &
+minio server --console-address ":9005" --address ":9004" ~/minio-data-3 &
+minio server --console-address ":9007" --address ":9006" ~/minio-data-4
 postgres setup:   
 brew update   
 brew install postgresql   
@@ -46,3 +51,51 @@ python manage.py runserver
 source env/bin/activate
 cd myproject
 python manage.py runserver
+
+
+
+setup multi minio server:
+minio server --console-address ":9001" --address ":9000" ~/minio-data-1 &
+minio server --console-address ":9003" --address ":9002" ~/minio-data-2 &
+minio server --console-address ":9005" --address ":9004" ~/minio-data-3 &
+minio server --console-address ":9007" --address ":9006" ~/minio-data-4 &
+
+
+mc alias set node1 http://127.0.0.1:9000 minioadmin minioadmin
+mc alias set node2 http://127.0.0.1:9002 minioadmin minioadmin
+mc alias set node3 http://127.0.0.1:9004 minioadmin minioadmin
+mc alias set node4 http://127.0.0.1:9006 minioadmin minioadmin
+
+mc mb node1/mybucket
+mc mb node2/mybucket
+mc mb node3/mybucket
+mc mb node4/mybucket
+
+mc admin relicate add node1 node2 node3 node4
+
+check health of a node:
+mc admin info node1
+
+
+when a node goes down, and comes back up we have to run:
+mc admin replicate resync start
+
+
+
+mc admin config set node1 notify_webhook:bucket-events endpoint=http://127.0.0.1:9002 &
+mc admin config set node1 notify_webhook:bucket-events endpoint=http://127.0.0.1:9004 &
+mc admin config set node1 notify_webhook:bucket-events endpoint=http://127.0.0.1:9006 &
+mc admin config set node2 notify_webhook:bucket-events endpoint=http://127.0.0.1:9000 &
+mc admin config set node2 notify_webhook:bucket-events endpoint=http://127.0.0.1:9004 &
+mc admin config set node2 notify_webhook:bucket-events endpoint=http://127.0.0.1:9006 &
+mc admin config set node3 notify_webhook:bucket-events endpoint=http://127.0.0.1:9000 &
+mc admin config set node3 notify_webhook:bucket-events endpoint=http://127.0.0.1:9002 &
+mc admin config set node3 notify_webhook:bucket-events endpoint=http://127.0.0.1:9006 &
+mc admin config set node4 notify_webhook:bucket-events endpoint=http://127.0.0.1:9000 &
+mc admin config set node4 notify_webhook:bucket-events endpoint=http://127.0.0.1:9002 &
+mc admin config set node4 notify_webhook:bucket-events endpoint=http://127.0.0.1:9004 
+
+mc admin service restart node1 &&
+mc admin service restart node2 &&
+mc admin service restart node3 &&
+mc admin service restart node4
