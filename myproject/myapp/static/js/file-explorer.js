@@ -3,10 +3,36 @@
 // Global variables
 let currentView = 'grid';
 let currentSize = 'medium';
-let currentSort = 'name';
+let currentSort = 'date';
+let currentSortOrder = 'desc';
+let currentPage = 1;
+let pageSize = 20;
+let totalPages = 1;
 
 // Initialize file explorer
 function initFileExplorer() {
+    // Set up sort order button first so it's available for fetchUserFiles
+    const sortOptions = document.querySelector('.sort-options');
+    if (sortOptions && !document.querySelector('.sort-order-btn')) {
+        const sortOrderBtn = document.createElement('button');
+        sortOrderBtn.className = 'sort-order-btn';
+        sortOrderBtn.title = currentSortOrder === 'asc' ? 'Ascending' : 'Descending';
+        sortOrderBtn.innerHTML = currentSortOrder === 'asc' ? 
+            '<i class="fas fa-sort-amount-up"></i>' : 
+            '<i class="fas fa-sort-amount-down"></i>';
+        
+        sortOrderBtn.addEventListener('click', function() {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            this.title = currentSortOrder === 'asc' ? 'Ascending' : 'Descending';
+            this.innerHTML = currentSortOrder === 'asc' ? 
+                '<i class="fas fa-sort-amount-up"></i>' : 
+                '<i class="fas fa-sort-amount-down"></i>';
+            fetchUserFiles(1, currentSort, currentSortOrder);
+        });
+        
+        sortOptions.appendChild(sortOrderBtn);
+    }
+    
     // Load files on page load
     fetchUserFiles();
     
@@ -27,14 +53,27 @@ function initFileExplorer() {
     // Set up sort select
     document.getElementById('sortSelect').addEventListener('change', function() {
         currentSort = this.value;
-        sortFiles();
+        fetchUserFiles(1, currentSort, currentSortOrder);
     });
 }
 
 // Fetch user files
-async function fetchUserFiles() {
+async function fetchUserFiles(page = currentPage, sort = currentSort, order = currentSortOrder) {
     try {
-        let response = await fetch("/api/user/files/");
+        // Update current values
+        currentPage = page;
+        currentSort = sort;
+        currentSortOrder = order;
+        
+        // Build query parameters
+        const params = new URLSearchParams({
+            page: page,
+            page_size: pageSize,
+            sort_by: sort,
+            sort_order: order
+        });
+        
+        let response = await fetch(`/api/user/files/?${params.toString()}`);
         let data = await response.json();
         let filesContainer = document.getElementById("filesContainer");
         
@@ -45,14 +84,17 @@ async function fetchUserFiles() {
             return;
         }
         
-        // Sort files
-        sortFileData(data.files);
+        // Store pagination info
+        totalPages = data.pagination.num_pages;
         
         // Create file items based on current view
         data.files.forEach(file => {
             const fileElement = createFileElement(file);
             filesContainer.appendChild(fileElement);
         });
+        
+        // Create pagination controls
+        createPaginationControls(filesContainer, data.pagination);
     } catch (error) {
         console.error("Error fetching files:", error);
         document.getElementById("filesContainer").innerHTML = 
@@ -183,6 +225,30 @@ function createListViewItem(file) {
     fileName.className = "file-name";
     fileName.innerText = file.name;
     
+    // File details
+    const fileDetails = document.createElement("div");
+    fileDetails.className = "file-details";
+    
+    // File size
+    const fileSize = document.createElement("span");
+    fileSize.className = "file-size";
+    fileSize.textContent = formatFileSize(file.size);
+    
+    // File date
+    const fileDate = document.createElement("span");
+    fileDate.className = "file-date";
+    fileDate.textContent = formatDate(file.upload_date);
+    
+    // File type
+    const fileType = document.createElement("span");
+    fileType.className = "file-type";
+    fileType.textContent = file.type || file.name.split('.').pop().toUpperCase();
+    
+    // Add details to file details container
+    fileDetails.appendChild(fileSize);
+    fileDetails.appendChild(fileDate);
+    fileDetails.appendChild(fileType);
+    
     // File actions
     const fileActions = document.createElement("div");
     fileActions.className = "file-actions";
@@ -226,6 +292,7 @@ function createListViewItem(file) {
     
     fileItem.appendChild(fileIcon);
     fileItem.appendChild(fileName);
+    fileItem.appendChild(fileDetails);
     fileItem.appendChild(fileActions);
     
     // Add click event to select the file
@@ -362,4 +429,61 @@ async function deleteFile(fileKey) {
         console.error("Error deleting file:", error);
         alert("Error deleting file. Please try again.");
     }
+}
+
+// Create pagination controls
+function createPaginationControls(container, pagination) {
+    // Remove any existing pagination bar
+    const existingPaginationBar = document.querySelector('.pagination-bar');
+    if (existingPaginationBar) {
+        existingPaginationBar.remove();
+    }
+    
+    // Create pagination bar (similar to view options bar)
+    const paginationBar = document.createElement('div');
+    paginationBar.className = 'pagination-bar';
+    
+    // Page info
+    const pageInfo = document.createElement('span');
+    pageInfo.className = 'pagination-info';
+    pageInfo.textContent = `Page ${pagination.page} of ${pagination.num_pages}`;
+    
+    // Pagination controls container
+    const paginationControls = document.createElement('div');
+    paginationControls.className = 'pagination-controls';
+    
+    // Previous button
+    const prevButton = document.createElement('button');
+    prevButton.className = 'pagination-btn prev-btn';
+    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i> Previous';
+    prevButton.disabled = !pagination.has_previous;
+    prevButton.addEventListener('click', () => {
+        if (pagination.has_previous) {
+            fetchUserFiles(currentPage - 1);
+        }
+    });
+    
+    // Next button
+    const nextButton = document.createElement('button');
+    nextButton.className = 'pagination-btn next-btn';
+    nextButton.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+    nextButton.disabled = !pagination.has_next;
+    nextButton.addEventListener('click', () => {
+        if (pagination.has_next) {
+            fetchUserFiles(currentPage + 1);
+        }
+    });
+    
+    // Add elements to pagination controls
+    paginationControls.appendChild(prevButton);
+    paginationControls.appendChild(nextButton);
+    
+    // Add elements to pagination bar
+    paginationBar.appendChild(pageInfo);
+    paginationBar.appendChild(paginationControls);
+    
+    // Add pagination bar to the container
+    // Insert it before the files container
+    const filesContainer = document.getElementById('filesContainer');
+    filesContainer.parentNode.insertBefore(paginationBar, filesContainer.nextSibling);
 } 

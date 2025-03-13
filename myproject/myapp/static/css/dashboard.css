@@ -416,4 +416,192 @@
 
 .content-section.active {
     display: block;
+}
+
+/* Pagination and Sorting Controls - Old styles, keeping for compatibility */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+}
+
+.pagination-btn {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.pagination-btn:hover {
+    background-color: #005a9e;
+}
+
+.pagination-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.pagination-btn i {
+    margin: 0 5px;
+}
+
+.pagination-info {
+    font-weight: 500;
+    color: #555;
+}
+
+/* View options bar */
+.view-options-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+    justify-content: space-between;
+}
+
+.view-options, .view-size, .sort-options {
+    display: flex;
+    align-items: center;
+}
+
+.view-option-btn, .size-option-btn {
+    background-color: transparent;
+    border: none;
+    padding: 8px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #555;
+    transition: background-color 0.2s;
+}
+
+.view-option-btn:hover, .size-option-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.view-option-btn.active, .size-option-btn.active {
+    background-color: #0078D7;
+    color: white;
+}
+
+.sort-options {
+    display: flex;
+    align-items: center;
+}
+
+.sort-select {
+    margin: 0 5px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #555;
+}
+
+.sort-order-btn {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-left: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sort-order-btn:hover {
+    background-color: #005a9e;
+}
+
+/* Remove the old sorting controls styles that are no longer needed */
+.sorting-controls {
+    display: none;
+}
+
+/* File details in list view */
+.file-details {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    padding: 0 15px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.file-size, .file-date, .file-type {
+    padding: 0 10px;
+    white-space: nowrap;
+}
+
+.file-date {
+    min-width: 180px;
+}
+
+.file-size {
+    min-width: 100px;
+}
+
+.file-type {
+    min-width: 80px;
+    text-align: center;
+}
+
+/* Pagination Bar */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin: 15px 0;
+    justify-content: space-between;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+}
+
+.pagination-btn {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.pagination-btn:hover {
+    background-color: #005a9e;
+}
+
+.pagination-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.pagination-btn i {
+    margin: 0 5px;
+}
+
+.pagination-info {
+    font-weight: 500;
+    color: #555;
+}
+
+/* Remove the old pagination controls styles that are no longer needed */
+.pagination-controls {
+    display: flex;
+    align-items: center;
 } 

@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db.models import Q
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
 
@@ -125,18 +126,68 @@ def complete_multipart_upload(request):
 
 @login_required
 def list_user_files(request):
-    """List all files uploaded by the logged-in user (without pre-signed URLs)"""
-    user_id = request.user.id
-    prefix = f"{user_id}/"
-
-    response = s3_client.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=prefix)
-
+    """List all files uploaded by the logged-in user with pagination and sorting"""
+    # Get pagination parameters
+    page = request.GET.get('page', 1)
+    page_size = request.GET.get('page_size', 20)
+    
+    # Get sorting parameters
+    sort_by = request.GET.get('sort_by', 'upload_date')  # Default sort by upload date
+    sort_order = request.GET.get('sort_order', 'desc')  # Default newest first
+    
+    # Map sort_by parameter to model field
+    sort_field_map = {
+        'name': 'file_name',
+        'size': 'file_size',
+        'date': 'upload_date',
+        'type': 'file_type',
+        'upload_date': 'upload_date'
+    }
+    
+    sort_field = sort_field_map.get(sort_by, 'upload_date')
+    
+    # Apply sort direction
+    if sort_order.lower() == 'asc':
+        order_by = sort_field
+    else:
+        order_by = f'-{sort_field}'
+    
+    # Query database for files
+    user_files = FileMetadata.objects.filter(user=request.user).order_by(order_by)
+    
+    # Create paginator
+    paginator = Paginator(user_files, page_size)
+    
+    try:
+        files_page = paginator.page(page)
+    except PageNotAnInteger:
+        files_page = paginator.page(1)
+    except EmptyPage:
+        files_page = paginator.page(paginator.num_pages)
+    
+    # Format response
     files = []
-    for obj in response.get("Contents", []):
-        file_key = obj["Key"]
-        files.append({"name": file_key.replace(prefix, ""), "key": file_key})
-
-    return JsonResponse({"files": files})
+    for file in files_page:
+        files.append({
+            "name": file.file_name,
+            "key": file.file_path,
+            "size": file.file_size,
+            "type": file.file_type,
+            "upload_date": file.upload_date.isoformat(),
+            "last_modified": file.last_modified.isoformat()
+        })
+    
+    return JsonResponse({
+        "files": files,
+        "pagination": {
+            "total": paginator.count,
+            "page": files_page.number,
+            "page_size": page_size,
+            "num_pages": paginator.num_pages,
+            "has_next": files_page.has_next(),
+            "has_previous": files_page.has_previous()
+        }
+    })
 
 @login_required
 def get_presigned_url(request):
@@ -191,18 +242,76 @@ def delete_user_file(request):
 
 @login_required
 def search_user_files(request):
-    """Search for a file uploaded by the logged-in user"""
+    """Search for a file uploaded by the logged-in user with pagination and sorting"""
     query = request.GET.get("query", "").lower().strip()
-
+    
     if not query:
         return JsonResponse({"error": "Query parameter is required"}, status=400)
-
-    user_files = FileMetadata.objects.filter(user=request.user, file_name__icontains=query).values(
-        "file_name", "file_path"
-    )
-
-    files = [{"name": file["file_name"], "key": file["file_path"]} for file in user_files]
-    return JsonResponse({"files": files})
+    
+    # Get pagination parameters
+    page = request.GET.get('page', 1)
+    page_size = request.GET.get('page_size', 20)
+    
+    # Get sorting parameters
+    sort_by = request.GET.get('sort_by', 'upload_date')  # Default sort by upload date
+    sort_order = request.GET.get('sort_order', 'desc')  # Default newest first
+    
+    # Map sort_by parameter to model field
+    sort_field_map = {
+        'name': 'file_name',
+        'size': 'file_size',
+        'date': 'upload_date',
+        'type': 'file_type',
+        'upload_date': 'upload_date'
+    }
+    
+    sort_field = sort_field_map.get(sort_by, 'upload_date')
+    
+    # Apply sort direction
+    if sort_order.lower() == 'asc':
+        order_by = sort_field
+    else:
+        order_by = f'-{sort_field}'
+    
+    # Query database for files
+    user_files = FileMetadata.objects.filter(
+        user=request.user, 
+        file_name__icontains=query
+    ).order_by(order_by)
+    
+    # Create paginator
+    paginator = Paginator(user_files, page_size)
+    
+    try:
+        files_page = paginator.page(page)
+    except PageNotAnInteger:
+        files_page = paginator.page(1)
+    except EmptyPage:
+        files_page = paginator.page(paginator.num_pages)
+    
+    # Format response
+    files = []
+    for file in files_page:
+        files.append({
+            "name": file.file_name,
+            "key": file.file_path,
+            "size": file.file_size,
+            "type": file.file_type,
+            "upload_date": file.upload_date.isoformat(),
+            "last_modified": file.last_modified.isoformat()
+        })
+    
+    return JsonResponse({
+        "files": files,
+        "pagination": {
+            "total": paginator.count,
+            "page": files_page.number,
+            "page_size": page_size,
+            "num_pages": paginator.num_pages,
+            "has_next": files_page.has_next(),
+            "has_previous": files_page.has_previous()
+        }
+    })
 
 @login_required
 def create_shared_link(request):
