@@ -46,7 +46,9 @@ function formatFileSize(bytes) {
 }
 
 // Format date
-function formatDate(dateString) {
+window.formatDate = function(dateString) {
+    if (!dateString) return 'N/A';
+    
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 } 

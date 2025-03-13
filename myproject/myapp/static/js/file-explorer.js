@@ -95,9 +95,15 @@ function createFileElement(file) {
 
 // Create grid view item
 function createGridViewItem(file) {
+    console.log("Creating grid view item for file:", file);
+    
     const fileItem = document.createElement("div");
     fileItem.className = "file-item";
+    fileItem.dataset.key = file.key;
     fileItem.dataset.fileKey = file.key;
+    fileItem.dataset.name = file.name;
+    
+    console.log("File item dataset:", fileItem.dataset);
     
     // File icon
     const fileIcon = document.createElement("i");
@@ -118,8 +124,14 @@ function createGridViewItem(file) {
     shareButton.innerHTML = '<i class="fas fa-share-alt"></i>';
     shareButton.title = "Share";
     shareButton.addEventListener("click", function(e) {
+        console.log("Share button clicked directly");
         e.stopPropagation();
-        // The share functionality is handled by the event listener in share.js
+        // Directly call createShareLink if it exists
+        if (typeof createShareLink === 'function') {
+            createShareLink(file.key, file.name);
+        } else {
+            console.error("createShareLink function not found");
+        }
     });
     
     // Download button
@@ -158,7 +170,9 @@ function createGridViewItem(file) {
 function createListViewItem(file) {
     const fileItem = document.createElement("div");
     fileItem.className = "file-item";
+    fileItem.dataset.key = file.key;
     fileItem.dataset.fileKey = file.key;
+    fileItem.dataset.name = file.name;
     
     // File icon
     const fileIcon = document.createElement("i");
@@ -178,8 +192,14 @@ function createListViewItem(file) {
     shareButton.className = "file-btn share-file-btn";
     shareButton.innerHTML = '<i class="fas fa-share-alt"></i> Share';
     shareButton.addEventListener("click", function(e) {
+        console.log("Share button clicked directly (list view)");
         e.stopPropagation();
-        // The share functionality is handled by the event listener in share.js
+        // Directly call createShareLink if it exists
+        if (typeof createShareLink === 'function') {
+            createShareLink(file.key, file.name);
+        } else {
+            console.error("createShareLink function not found");
+        }
     });
     
     // Download button
@@ -278,6 +298,11 @@ function sortFiles() {
 
 // Download file
 async function downloadFile(fileKey) {
+    if (!fileKey) {
+        console.error("No file key provided for download");
+        return;
+    }
+    
     try {
         let response = await fetch("/api/user/file-url/", {
             method: "POST",
@@ -309,6 +334,11 @@ async function downloadFile(fileKey) {
 
 // Delete file
 async function deleteFile(fileKey) {
+    if (!fileKey) {
+        console.error("No file key provided for deletion");
+        return;
+    }
+    
     let confirmation = confirm("Are you sure you want to delete this file?");
     if (!confirmation) return;
     

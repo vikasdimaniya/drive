@@ -48,11 +48,6 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-}
-
 async function fetchUserFiles() {
     try {
         let response = await fetch("/api/user/files/");
@@ -176,5 +171,10 @@ function createListViewItem(file) {
     const fileDetails = document.createElement("div");
     fileDetails.className = "file-details";
     
-    const fileSize = 
+    const fileSize = document.createElement("span");
+    fileSize.className = "file-size";
+    fileSize.textContent = formatFileSize(file.size);
+    
+    fileDetails.appendChild(fileSize);
+    return fileDetails;
 } 

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 from datetime import datetime, timedelta
+from django.utils import timezone
 
 class FileMetadata(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -33,7 +34,7 @@ class SharedLink(models.Model):
     def save(self, *args, **kwargs):
         # Set default expiration to 7 days from now if not provided
         if not self.expires_at and self.id is None:  # Only set on creation
-            self.expires_at = datetime.now() + timedelta(days=7)
+            self.expires_at = timezone.now() + timedelta(days=7)
         
         # Set owner if not already set
         if not self.owner_id and self.file:
@@ -47,7 +48,7 @@ class SharedLink(models.Model):
         if not self.is_active:
             return False
         
-        if self.expires_at and self.expires_at < datetime.now():
+        if self.expires_at and self.expires_at < timezone.now():
             return False
             
         return True

@@ -161,7 +161,19 @@
     
     <!-- Inline script for initialization -->
     <script>
+        console.log("Dashboard script initializing");
+        
+        // Check if all required functions are available
+        console.log("Checking required functions:");
+        console.log("getCSRFToken:", typeof getCSRFToken === 'function');
+        console.log("getFileIcon:", typeof getFileIcon === 'function');
+        console.log("initFileExplorer:", typeof initFileExplorer === 'function');
+        console.log("initShare:", typeof initShare === 'function');
+        console.log("createShareLink:", typeof createShareLink === 'function');
+        
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
             // Initialize file explorer
             initFileExplorer();
             
@@ -180,26 +192,34 @@
             const myFilesSection = document.getElementById('myFilesSection');
             const sharedFilesSection = document.getElementById('sharedFilesSection');
             
-            myFilesTab.addEventListener('click', function(e) {
-                e.preventDefault();
-                myFilesTab.parentElement.querySelector('a.active').classList.remove('active');
-                myFilesTab.classList.add('active');
+            if (myFilesTab && sharedFilesTab && myFilesSection && sharedFilesSection) {
+                myFilesTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const activeTab = myFilesTab.parentElement.querySelector('a.active');
+                    if (activeTab) {
+                        activeTab.classList.remove('active');
+                    }
+                    myFilesTab.classList.add('active');
+                    
+                    myFilesSection.classList.add('active');
+                    sharedFilesSection.classList.remove('active');
+                });
                 
-                myFilesSection.classList.add('active');
-                sharedFilesSection.classList.remove('active');
-            });
-            
-            sharedFilesTab.addEventListener('click', function(e) {
-                e.preventDefault();
-                sharedFilesTab.parentElement.querySelector('a.active').classList.remove('active');
-                sharedFilesTab.classList.add('active');
-                
-                sharedFilesSection.classList.add('active');
-                myFilesSection.classList.remove('active');
-                
-                // Load shared files when tab is clicked
-                loadSharedWithMe();
-            });
+                sharedFilesTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const activeTab = sharedFilesTab.parentElement.querySelector('a.active');
+                    if (activeTab) {
+                        activeTab.classList.remove('active');
+                    }
+                    sharedFilesTab.classList.add('active');
+                    
+                    sharedFilesSection.classList.add('active');
+                    myFilesSection.classList.remove('active');
+                    
+                    // Load shared files when tab is clicked
+                    loadSharedWithMe();
+                });
+            }
             
             // Shared files tabs
             const sharedWithMeTab = document.getElementById('sharedWithMeTab');
@@ -207,21 +227,23 @@
             const sharedWithMeContent = document.getElementById('sharedWithMeContent');
             const sharedByMeContent = document.getElementById('sharedByMeContent');
             
-            sharedWithMeTab.addEventListener('click', function() {
-                sharedWithMeTab.classList.add('active');
-                sharedByMeTab.classList.remove('active');
+            if (sharedWithMeTab && sharedByMeTab && sharedWithMeContent && sharedByMeContent) {
+                sharedWithMeTab.addEventListener('click', function() {
+                    sharedWithMeTab.classList.add('active');
+                    sharedByMeTab.classList.remove('active');
+                    
+                    sharedWithMeContent.classList.add('active');
+                    sharedByMeContent.classList.remove('active');
+                });
                 
-                sharedWithMeContent.classList.add('active');
-                sharedByMeContent.classList.remove('active');
-            });
-            
-            sharedByMeTab.addEventListener('click', function() {
-                sharedByMeTab.classList.add('active');
-                sharedWithMeTab.classList.remove('active');
-                
-                sharedByMeContent.classList.add('active');
-                sharedWithMeContent.classList.remove('active');
-            });
+                sharedByMeTab.addEventListener('click', function() {
+                    sharedByMeTab.classList.add('active');
+                    sharedWithMeTab.classList.remove('active');
+                    
+                    sharedByMeContent.classList.add('active');
+                    sharedWithMeContent.classList.remove('active');
+                });
+            }
         });
     </script>
 </body>

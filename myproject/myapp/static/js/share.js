@@ -2,50 +2,11 @@
  * Shared links functionality
  */
 
-function initShare() {
-    // Listen for share button clicks in the file context menu
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('share-file-btn') || e.target.closest('.share-file-btn')) {
-            const fileItem = e.target.closest('.file-item');
-            const fileKey = fileItem.dataset.key;
-            const fileName = fileItem.dataset.name;
-            
-            createShareLink(fileKey, fileName);
-        }
-        
-        // Listen for revoke access button clicks
-        if (e.target.classList.contains('revoke-access-btn') || e.target.closest('.revoke-access-btn')) {
-            const fileItem = e.target.closest('.file-item');
-            const token = fileItem.dataset.token;
-            const fileName = fileItem.dataset.name;
-            
-            revokeAccess(token, fileName);
-        }
-    });
+// Make sure createShareLink is defined before initShare
+// so it's available to other scripts
+window.createShareLink = function(fileKey, fileName) {
+    console.log("createShareLink called with:", { fileKey, fileName });
     
-    // Initialize shared tabs if they exist
-    const sharedWithMeTab = document.getElementById('sharedWithMeTab');
-    const sharedByMeTab = document.getElementById('sharedByMeTab');
-    
-    if (sharedWithMeTab) {
-        sharedWithMeTab.addEventListener('click', function() {
-            loadSharedWithMe();
-        });
-    }
-    
-    if (sharedByMeTab) {
-        sharedByMeTab.addEventListener('click', function() {
-            loadSharedByMe();
-        });
-    }
-}
-
-/**
- * Create a shared link for a file
- * @param {string} fileKey - The file key
- * @param {string} fileName - The file name for display
- */
-function createShareLink(fileKey, fileName) {
     // Create modal for sharing options
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -88,10 +49,12 @@ function createShareLink(fileKey, fileName) {
         </div>
     `;
     
+    console.log("Modal created");
     document.body.appendChild(modal);
     
     // Show modal
     setTimeout(() => {
+        console.log("Adding 'show' class to modal");
         modal.classList.add('show');
     }, 10);
     
@@ -172,14 +135,72 @@ function createShareLink(fileKey, fileName) {
             createLinkBtn.disabled = false;
         }
     });
-}
+};
+
+// Expose other functions globally as well
+window.initShare = function() {
+    console.log("initShare function called");
+    
+    // Listen for share button clicks in the file context menu
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('share-file-btn') || e.target.closest('.share-file-btn')) {
+            console.log("Share button clicked");
+            const fileItem = e.target.closest('.file-item');
+            if (!fileItem) {
+                console.error("Could not find parent file-item element");
+                return;
+            }
+            
+            // Check for both dataset.key and dataset.fileKey for compatibility
+            const fileKey = fileItem.dataset.key || fileItem.dataset.fileKey;
+            const fileName = fileItem.dataset.name || fileItem.innerText;
+            
+            console.log("File data:", { fileKey, fileName });
+            
+            if (fileKey) {
+                createShareLink(fileKey, fileName);
+            } else {
+                console.error("No fileKey found in dataset");
+            }
+        }
+        
+        // Listen for revoke access button clicks
+        if (e.target.classList.contains('revoke-access-btn') || e.target.closest('.revoke-access-btn')) {
+            const fileItem = e.target.closest('.file-item');
+            if (!fileItem) return; // Add null check
+            
+            const token = fileItem.dataset.token;
+            const fileName = fileItem.dataset.name;
+            
+            if (token && fileName) {
+                revokeAccess(token, fileName);
+            }
+        }
+    });
+    
+    // Initialize shared tabs if they exist
+    const sharedWithMeTab = document.getElementById('sharedWithMeTab');
+    const sharedByMeTab = document.getElementById('sharedByMeTab');
+    
+    if (sharedWithMeTab) {
+        sharedWithMeTab.addEventListener('click', function() {
+            loadSharedWithMe();
+        });
+    }
+    
+    if (sharedByMeTab) {
+        sharedByMeTab.addEventListener('click', function() {
+            loadSharedByMe();
+        });
+    }
+};
 
 /**
  * Revoke access to a shared file
  * @param {string} token - The shared link token
  * @param {string} fileName - The file name for display
  */
-function revokeAccess(token, fileName) {
+window.revokeAccess = function(token, fileName) {
     if (confirm(`Are you sure you want to revoke access to "${fileName}"?`)) {
         fetch('/api/user/revoke-access/', {
             method: 'POST',
@@ -206,12 +227,12 @@ function revokeAccess(token, fileName) {
             alert('Failed to revoke access. Please try again.');
         });
     }
-}
+};
 
 /**
  * Load files shared with the current user
  */
-function loadSharedWithMe() {
+window.loadSharedWithMe = function() {
     const container = document.getElementById('sharedWithMeContainer');
     if (!container) return;
     
@@ -274,12 +295,12 @@ function loadSharedWithMe() {
             console.error('Error loading shared files:', error);
             container.innerHTML = '<div class="error-message">Error loading shared files. Please try again.</div>';
         });
-}
+};
 
 /**
  * Load files shared by the current user
  */
-function loadSharedByMe() {
+window.loadSharedByMe = function() {
     const container = document.getElementById('sharedByMeContainer');
     if (!container) return;
     
@@ -352,16 +373,4 @@ function loadSharedByMe() {
             console.error('Error loading shared files:', error);
             container.innerHTML = '<div class="error-message">Error loading shared files. Please try again.</div>';
         });
-}
-
-/**
- * Format a date string
- * @param {string} dateString - ISO date string
- * @returns {string} Formatted date
- */
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-} 
+}; 
