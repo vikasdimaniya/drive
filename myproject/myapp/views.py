@@ -1,12 +1,17 @@
 import boto3
 import json
-from django.http import JsonResponse
+import uuid
+from datetime import datetime, timedelta
+from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from myapp.models import FileMetadata
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db.models import Q
+from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
 
 # Initializing MinIO client
@@ -198,5 +203,176 @@ def search_user_files(request):
 
     files = [{"name": file["file_name"], "key": file["file_path"]} for file in user_files]
     return JsonResponse({"files": files})
+
+@login_required
+def create_shared_link(request):
+    """Create a shared link for a file with a specific user"""
+    data = json.loads(request.body)
+    file_key = data.get("file_key")
+    recipient_email = data.get("recipient_email")
+    expiry_days = data.get("expiry_days")
+    
+    if not file_key or not recipient_email:
+        return JsonResponse({"error": "File key and recipient email are required"}, status=400)
+    
+    # Ensure the user is sharing only their own files
+    user_id = request.user.id
+    if not file_key.startswith(f"{user_id}/"):
+        return JsonResponse({"error": "Unauthorized access"}, status=403)
+    
+    # Get the file metadata
+    try:
+        file_metadata = FileMetadata.objects.get(user=request.user, file_path=file_key)
+    except FileMetadata.DoesNotExist:
+        return JsonResponse({"error": "File not found"}, status=404)
+    
+    # Create expiration date if provided
+    expires_at = None
+    if expiry_days:
+        expires_at = datetime.now() + timedelta(days=int(expiry_days))
+    
+    # Check if recipient is a registered user
+    recipient_user = None
+    try:
+        recipient_user = User.objects.get(email=recipient_email)
+    except User.DoesNotExist:
+        # If not a registered user, we'll just store their email
+        pass
+    
+    # Create a shared link
+    shared_link = SharedLink.objects.create(
+        file=file_metadata,
+        owner=request.user,
+        shared_with=recipient_user,
+        shared_with_email=recipient_email,
+        expires_at=expires_at
+    )
+    
+    # Generate the full URL for the shared link
+    share_url = f"{request.scheme}://{request.get_host()}/shared/{shared_link.token}"
+    
+    # Send email notification (this would be implemented with a proper email backend)
+    try:
+        send_mail(
+            f'{request.user.username} shared a file with you',
+            f'Hello,\n\n{request.user.username} has shared the file "{file_metadata.file_name}" with you.\n\nYou can access it using this link: {share_url}\n\nRegards,\nMyDrive Team',
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+            fail_silently=False,
+        )
+        shared_link.is_email_sent = True
+        shared_link.save()
+    except Exception as e:
+        # Log the error but continue
+        print(f"Error sending email: {str(e)}")
+    
+    return JsonResponse({
+        "share_url": share_url,
+        "expires_at": expires_at.isoformat() if expires_at else None,
+        "token": str(shared_link.token),
+        "recipient": recipient_user.username if recipient_user else recipient_email
+    })
+
+def access_shared_file(request, token):
+    """Access a file via a shared link"""
+    try:
+        # Find the shared link by token
+        shared_link = get_object_or_404(SharedLink, token=token)
+        
+        # Check if the link is valid
+        if not shared_link.is_valid:
+            return render(request, 'myapp/shared_link_error.html', {
+                'error': 'This link has expired or is no longer active.'
+            })
+        
+        # Get the file metadata
+        file_metadata = shared_link.file
+        
+        # Generate a pre-signed URL for the file
+        presigned_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": settings.AWS_STORAGE_BUCKET_NAME, 
+                "Key": file_metadata.file_path
+            },
+            ExpiresIn=3600,  # 1-hour expiration
+        )
+        
+        # If user is logged in and is the recipient, add to their shared files
+        if request.user.is_authenticated:
+            if shared_link.shared_with_email == request.user.email and not shared_link.shared_with:
+                shared_link.shared_with = request.user
+                shared_link.save()
+        
+        # Redirect to the pre-signed URL for direct download
+        return redirect(presigned_url)
+        
+    except Http404:
+        return render(request, 'myapp/shared_link_error.html', {
+            'error': 'Invalid or expired link.'
+        })
+
+@login_required
+def list_shared_with_me(request):
+    """List all files shared with the logged-in user"""
+    # Get files shared directly with the user
+    shared_links = SharedLink.objects.filter(
+        Q(shared_with=request.user) | Q(shared_with_email=request.user.email),
+        is_active=True
+    ).select_related('file', 'owner')
+    
+    files = []
+    for link in shared_links:
+        if link.is_valid:
+            files.append({
+                "name": link.file.file_name,
+                "key": link.file.file_path,
+                "shared_by": link.owner.username,
+                "shared_date": link.created_at.isoformat(),
+                "expires_at": link.expires_at.isoformat() if link.expires_at else None,
+                "token": str(link.token)
+            })
+    
+    return JsonResponse({"files": files})
+
+@login_required
+def list_shared_by_me(request):
+    """List all files shared by the logged-in user"""
+    shared_links = SharedLink.objects.filter(
+        owner=request.user
+    ).select_related('file', 'shared_with')
+    
+    files = []
+    for link in shared_links:
+        recipient = link.shared_with.username if link.shared_with else link.shared_with_email
+        files.append({
+            "name": link.file.file_name,
+            "key": link.file.file_path,
+            "shared_with": recipient,
+            "shared_date": link.created_at.isoformat(),
+            "expires_at": link.expires_at.isoformat() if link.expires_at else None,
+            "is_active": link.is_active,
+            "is_valid": link.is_valid,
+            "token": str(link.token)
+        })
+    
+    return JsonResponse({"files": files})
+
+@login_required
+def revoke_access(request):
+    """Revoke access to a shared file"""
+    data = json.loads(request.body)
+    token = data.get("token")
+    
+    if not token:
+        return JsonResponse({"error": "Token is required"}, status=400)
+    
+    try:
+        shared_link = SharedLink.objects.get(token=token, owner=request.user)
+        shared_link.is_active = False
+        shared_link.save()
+        return JsonResponse({"message": "Access revoked successfully"})
+    except SharedLink.DoesNotExist:
+        return JsonResponse({"error": "Shared link not found or you don't have permission"}, status=404)
 
 

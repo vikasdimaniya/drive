@@ -1,6 +1,10 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, list_user_files, get_presigned_url, delete_user_file, search_user_files, signup, home
+from .views import (
+    dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, 
+    list_user_files, get_presigned_url, delete_user_file, search_user_files, signup, home, 
+    create_shared_link, access_shared_file, list_shared_with_me, list_shared_by_me, revoke_access
+)
 
 urlpatterns = [
     # Root URL
@@ -28,5 +32,12 @@ urlpatterns = [
 
     # Delete user file
     path("api/user/delete-file/", delete_user_file, name="delete-user-file"),
+    
+    # Shared links
+    path("api/user/create-shared-link/", create_shared_link, name="create-shared-link"),
+    path("shared/<uuid:token>/", access_shared_file, name="access-shared-file"),
+    path("api/user/shared-with-me/", list_shared_with_me, name="shared-with-me"),
+    path("api/user/shared-by-me/", list_shared_by_me, name="shared-by-me"),
+    path("api/user/revoke-access/", revoke_access, name="revoke-access"),
 ]
 

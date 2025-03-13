@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Link Error</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 64px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .home-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .home-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1 class="error-title">Link Error</h1>
+        <p class="error-message">{{ error }}</p>
+        <a href="{% url 'dashboard' %}" class="home-button">Go to Dashboard</a>
+    </div>
+</body>
+</html> 

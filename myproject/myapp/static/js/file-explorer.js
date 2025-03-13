@@ -112,6 +112,16 @@ function createGridViewItem(file) {
     const fileActions = document.createElement("div");
     fileActions.className = "file-actions";
     
+    // Share button
+    const shareButton = document.createElement("button");
+    shareButton.className = "file-btn share-file-btn";
+    shareButton.innerHTML = '<i class="fas fa-share-alt"></i>';
+    shareButton.title = "Share";
+    shareButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        // The share functionality is handled by the event listener in share.js
+    });
+    
     // Download button
     const downloadButton = document.createElement("button");
     downloadButton.className = "file-btn download-btn";
@@ -132,6 +142,7 @@ function createGridViewItem(file) {
         deleteFile(file.key);
     });
     
+    fileActions.appendChild(shareButton);
     fileActions.appendChild(downloadButton);
     fileActions.appendChild(deleteButton);
     
@@ -162,6 +173,15 @@ function createListViewItem(file) {
     const fileActions = document.createElement("div");
     fileActions.className = "file-actions";
     
+    // Share button
+    const shareButton = document.createElement("button");
+    shareButton.className = "file-btn share-file-btn";
+    shareButton.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+    shareButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        // The share functionality is handled by the event listener in share.js
+    });
+    
     // Download button
     const downloadButton = document.createElement("button");
     downloadButton.className = "file-btn download-btn";
@@ -180,6 +200,7 @@ function createListViewItem(file) {
         deleteFile(file.key);
     });
     
+    fileActions.appendChild(shareButton);
     fileActions.appendChild(downloadButton);
     fileActions.appendChild(deleteButton);
     

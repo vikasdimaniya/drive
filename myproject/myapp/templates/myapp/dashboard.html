@@ -42,83 +42,111 @@
                 </div>
                 
                 <ul class="sidebar-menu">
-                    <li><a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-                    <li><a href="#"><i class="fas fa-folder"></i> My Files</a></li>
-                    <li><a href="#"><i class="fas fa-share-alt"></i> Shared Files</a></li>
+                    <li><a href="#" class="active" id="myFilesTab"><i class="fas fa-home"></i> My Files</a></li>
+                    <li><a href="#" id="sharedFilesTab"><i class="fas fa-share-alt"></i> Shared Files</a></li>
                     <li><a href="#"><i class="fas fa-trash"></i> Trash</a></li>
                     <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
                 </ul>
             </div>
             
             <div class="main-content">
-                <div class="upload-section">
-                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload Files</h3>
-                    <div class="file-input-container">
-                        <div class="custom-file-input">
-                            <input type="file" id="fileInput">
-                            <div class="file-input-label" id="fileLabel">Choose a file...</div>
+                <!-- My Files Section -->
+                <div id="myFilesSection" class="content-section active">
+                    <div class="upload-section">
+                        <h3><i class="fas fa-cloud-upload-alt"></i> Upload Files</h3>
+                        <div class="file-input-container">
+                            <div class="custom-file-input">
+                                <input type="file" id="fileInput">
+                                <div class="file-input-label" id="fileLabel">Choose a file...</div>
+                            </div>
+                            <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload</button>
                         </div>
-                        <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload</button>
-                    </div>
-                    <div class="progress-container" id="progressContainer">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text" id="progressText">0%</div>
                         </div>
-                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                    
+                    <div class="search-section">
+                        <div class="search-container">
+                            <input type="text" id="searchQuery" class="search-input" placeholder="Search files...">
+                            <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- View Options Bar (macOS Finder style) -->
+                    <div class="view-options-bar">
+                        <div class="view-options">
+                            <button class="view-option-btn active" data-view="grid" title="Grid View">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button class="view-option-btn" data-view="list" title="List View">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button class="view-option-btn" data-view="columns" title="Column View">
+                                <i class="fas fa-columns"></i>
+                            </button>
+                        </div>
+                        <div class="view-size">
+                            <button class="size-option-btn" data-size="small" title="Small Icons">
+                                <i class="fas fa-compress"></i>
+                            </button>
+                            <button class="size-option-btn active" data-size="medium" title="Medium Icons">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="size-option-btn" data-size="large" title="Large Icons">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                        </div>
+                        <div class="sort-options">
+                            <select id="sortSelect" class="sort-select">
+                                <option value="name">Name</option>
+                                <option value="date">Date</option>
+                                <option value="size">Size</option>
+                                <option value="type">Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="files-section">
+                        <h3><i class="fas fa-folder-open"></i> Your Files</h3>
+                        <div id="filesContainer" class="files-container view-grid size-medium">
+                            <div class="empty-message">Loading files...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="files-section" style="margin-top: 30px; display: none;" id="searchResultsSection">
+                        <h3><i class="fas fa-search"></i> Search Results</h3>
+                        <div id="searchResultsContainer" class="files-container view-grid size-medium"></div>
                     </div>
                 </div>
                 
-                <div class="search-section">
-                    <div class="search-container">
-                        <input type="text" id="searchQuery" class="search-input" placeholder="Search files...">
-                        <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+                <!-- Shared Files Section -->
+                <div id="sharedFilesSection" class="content-section">
+                    <div class="shared-tabs">
+                        <div class="shared-tab active" id="sharedWithMeTab">Shared with me</div>
+                        <div class="shared-tab" id="sharedByMeTab">Shared by me</div>
                     </div>
-                </div>
-                
-                <!-- View Options Bar (macOS Finder style) -->
-                <div class="view-options-bar">
-                    <div class="view-options">
-                        <button class="view-option-btn active" data-view="grid" title="Grid View">
-                            <i class="fas fa-th-large"></i>
-                        </button>
-                        <button class="view-option-btn" data-view="list" title="List View">
-                            <i class="fas fa-list"></i>
-                        </button>
-                        <button class="view-option-btn" data-view="columns" title="Column View">
-                            <i class="fas fa-columns"></i>
-                        </button>
+                    
+                    <div class="shared-content active" id="sharedWithMeContent">
+                        <div class="files-section">
+                            <h3><i class="fas fa-share-alt"></i> Files Shared with You</h3>
+                            <div id="sharedWithMeContainer" class="files-container view-list">
+                                <div class="empty-message">Loading shared files...</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="view-size">
-                        <button class="size-option-btn" data-size="small" title="Small Icons">
-                            <i class="fas fa-compress"></i>
-                        </button>
-                        <button class="size-option-btn active" data-size="medium" title="Medium Icons">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                        <button class="size-option-btn" data-size="large" title="Large Icons">
-                            <i class="fas fa-expand-arrows-alt"></i>
-                        </button>
+                    
+                    <div class="shared-content" id="sharedByMeContent">
+                        <div class="files-section">
+                            <h3><i class="fas fa-share-square"></i> Files You've Shared</h3>
+                            <div id="sharedByMeContainer" class="files-container view-list">
+                                <div class="empty-message">Loading shared files...</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="sort-options">
-                        <select id="sortSelect" class="sort-select">
-                            <option value="name">Name</option>
-                            <option value="date">Date</option>
-                            <option value="size">Size</option>
-                            <option value="type">Type</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="files-section">
-                    <h3><i class="fas fa-folder-open"></i> Your Files</h3>
-                    <div id="filesContainer" class="files-container view-grid size-medium">
-                        <div class="empty-message">Loading files...</div>
-                    </div>
-                </div>
-                
-                <div class="files-section" style="margin-top: 30px; display: none;" id="searchResultsSection">
-                    <h3><i class="fas fa-search"></i> Search Results</h3>
-                    <div id="searchResultsContainer" class="files-container view-grid size-medium"></div>
                 </div>
             </div>
         </div>
@@ -129,6 +157,7 @@
     <script src="{% static 'js/file-explorer.js' %}"></script>
     <script src="{% static 'js/upload.js' %}"></script>
     <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/share.js' %}"></script>
     
     <!-- Inline script for initialization -->
     <script>
@@ -141,6 +170,58 @@
             
             // Initialize search functionality
             initSearch();
+            
+            // Initialize share functionality
+            initShare();
+            
+            // Tab navigation
+            const myFilesTab = document.getElementById('myFilesTab');
+            const sharedFilesTab = document.getElementById('sharedFilesTab');
+            const myFilesSection = document.getElementById('myFilesSection');
+            const sharedFilesSection = document.getElementById('sharedFilesSection');
+            
+            myFilesTab.addEventListener('click', function(e) {
+                e.preventDefault();
+                myFilesTab.parentElement.querySelector('a.active').classList.remove('active');
+                myFilesTab.classList.add('active');
+                
+                myFilesSection.classList.add('active');
+                sharedFilesSection.classList.remove('active');
+            });
+            
+            sharedFilesTab.addEventListener('click', function(e) {
+                e.preventDefault();
+                sharedFilesTab.parentElement.querySelector('a.active').classList.remove('active');
+                sharedFilesTab.classList.add('active');
+                
+                sharedFilesSection.classList.add('active');
+                myFilesSection.classList.remove('active');
+                
+                // Load shared files when tab is clicked
+                loadSharedWithMe();
+            });
+            
+            // Shared files tabs
+            const sharedWithMeTab = document.getElementById('sharedWithMeTab');
+            const sharedByMeTab = document.getElementById('sharedByMeTab');
+            const sharedWithMeContent = document.getElementById('sharedWithMeContent');
+            const sharedByMeContent = document.getElementById('sharedByMeContent');
+            
+            sharedWithMeTab.addEventListener('click', function() {
+                sharedWithMeTab.classList.add('active');
+                sharedByMeTab.classList.remove('active');
+                
+                sharedWithMeContent.classList.add('active');
+                sharedByMeContent.classList.remove('active');
+            });
+            
+            sharedByMeTab.addEventListener('click', function() {
+                sharedByMeTab.classList.add('active');
+                sharedWithMeTab.classList.remove('active');
+                
+                sharedByMeContent.classList.add('active');
+                sharedWithMeContent.classList.remove('active');
+            });
         });
     </script>
 </body>
