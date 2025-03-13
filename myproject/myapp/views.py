@@ -17,6 +17,10 @@ s3_client = boto3.client(
     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
 )
 
+def home(request):
+    """Redirect to login page from root URL"""
+    return redirect('login')
+
 @csrf_exempt
 def signup(request):
     if request.method == 'POST':
