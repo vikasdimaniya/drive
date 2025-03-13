@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 
@@ -6,393 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f0f0f0;
-            color: #333;
-            min-height: 100vh;
-        }
-        
-        .navbar {
-            background-color: #0078D7;
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .navbar h1 {
-            font-size: 22px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        
-        .navbar h1 i {
-            margin-right: 10px;
-            font-size: 24px;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-        }
-        
-        .user-info span {
-            margin-right: 15px;
-        }
-        
-        .logout-btn {
-            background-color: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .logout-btn i {
-            margin-right: 5px;
-        }
-        
-        .logout-btn:hover {
-            background-color: rgba(255,255,255,0.3);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 3fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .sidebar {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-        }
-        
-        .main-content {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-        }
-        
-        .upload-section {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px dashed #ccc;
-        }
-        
-        .upload-section h3 {
-            margin-bottom: 15px;
-            color: #0078D7;
-            display: flex;
-            align-items: center;
-        }
-        
-        .upload-section h3 i {
-            margin-right: 10px;
-        }
-        
-        .file-input-container {
-            display: flex;
-            margin-bottom: 15px;
-        }
-        
-        .custom-file-input {
-            position: relative;
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        
-        .custom-file-input input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-        
-        .file-input-label {
-            display: block;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px 15px;
-            cursor: pointer;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        
-        .upload-btn {
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .upload-btn i {
-            margin-right: 5px;
-        }
-        
-        .upload-btn:hover {
-            background-color: #005a9e;
-        }
-        
-        .progress-container {
-            margin-top: 10px;
-            display: none;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #0078D7;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        .progress-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-            text-align: right;
-        }
-        
-        .search-section {
-            margin-bottom: 20px;
-        }
-        
-        .search-container {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        
-        .search-input {
-            flex-grow: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px 0 0 4px;
-            font-size: 14px;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #0078D7;
-        }
-        
-        .search-btn {
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            border-radius: 0 4px 4px 0;
-            padding: 0 15px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .search-btn:hover {
-            background-color: #005a9e;
-        }
-        
-        .files-section h3 {
-            margin-bottom: 15px;
-            color: #0078D7;
-            display: flex;
-            align-items: center;
-        }
-        
-        .files-section h3 i {
-            margin-right: 10px;
-        }
-        
-        .files-list {
-            list-style-type: none;
-        }
-        
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-        
-        .file-item:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .file-icon {
-            font-size: 20px;
-            color: #0078D7;
-            margin-right: 15px;
-        }
-        
-        .file-name {
-            flex-grow: 1;
-            font-size: 14px;
-        }
-        
-        .file-actions {
-            display: flex;
-        }
-        
-        .file-btn {
-            background-color: transparent;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 5px 10px;
-            margin-left: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .file-btn i {
-            margin-right: 5px;
-        }
-        
-        .download-btn {
-            color: #0078D7;
-        }
-        
-        .download-btn:hover {
-            background-color: #e6f2ff;
-            border-color: #0078D7;
-        }
-        
-        .delete-btn {
-            color: #e81123;
-        }
-        
-        .delete-btn:hover {
-            background-color: #fde7e9;
-            border-color: #e81123;
-        }
-        
-        .empty-message {
-            text-align: center;
-            padding: 30px;
-            color: #777;
-            font-style: italic;
-        }
-        
-        .sidebar-menu {
-            list-style-type: none;
-        }
-        
-        .sidebar-menu li {
-            margin-bottom: 10px;
-        }
-        
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            border-radius: 4px;
-            color: #333;
-            text-decoration: none;
-            transition: background-color 0.2s;
-        }
-        
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: #e6f2ff;
-            color: #0078D7;
-        }
-        
-        .sidebar-menu i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background-color: #0078D7;
-            border-radius: 50%;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-        
-        .user-details {
-            flex-grow: 1;
-        }
-        
-        .user-name {
-            font-weight: 500;
-        }
-        
-        .user-email {
-            font-size: 12px;
-            color: #777;
-        }
-        
-        @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                order: 2;
-            }
-            
-            .main-content {
-                order: 1;
-            }
-        }
+        /* Basic styles to prevent FOUC (Flash of Unstyled Content) */
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .navbar { background-color: #0078D7; color: white; padding: 15px 20px; display: flex; justify-content: space-between; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
     </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/file-explorer.css' %}">
 </head>
 
 <body>
@@ -435,7 +58,7 @@
                             <input type="file" id="fileInput">
                             <div class="file-input-label" id="fileLabel">Choose a file...</div>
                         </div>
-                        <button class="upload-btn" onclick="startUpload()"><i class="fas fa-upload"></i> Upload</button>
+                        <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload</button>
                     </div>
                     <div class="progress-container" id="progressContainer">
                         <div class="progress-bar">
@@ -448,378 +71,77 @@
                 <div class="search-section">
                     <div class="search-container">
                         <input type="text" id="searchQuery" class="search-input" placeholder="Search files...">
-                        <button class="search-btn" onclick="searchFiles()"><i class="fas fa-search"></i></button>
+                        <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                
+                <!-- View Options Bar (macOS Finder style) -->
+                <div class="view-options-bar">
+                    <div class="view-options">
+                        <button class="view-option-btn active" data-view="grid" title="Grid View">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-option-btn" data-view="list" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="view-option-btn" data-view="columns" title="Column View">
+                            <i class="fas fa-columns"></i>
+                        </button>
+                    </div>
+                    <div class="view-size">
+                        <button class="size-option-btn" data-size="small" title="Small Icons">
+                            <i class="fas fa-compress"></i>
+                        </button>
+                        <button class="size-option-btn active" data-size="medium" title="Medium Icons">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="size-option-btn" data-size="large" title="Large Icons">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                    </div>
+                    <div class="sort-options">
+                        <select id="sortSelect" class="sort-select">
+                            <option value="name">Name</option>
+                            <option value="date">Date</option>
+                            <option value="size">Size</option>
+                            <option value="type">Type</option>
+                        </select>
                     </div>
                 </div>
                 
                 <div class="files-section">
                     <h3><i class="fas fa-folder-open"></i> Your Files</h3>
-                    <ul class="files-list" id="fileList">
-                        <li class="empty-message">Loading files...</li>
-                    </ul>
+                    <div id="filesContainer" class="files-container view-grid size-medium">
+                        <div class="empty-message">Loading files...</div>
+                    </div>
                 </div>
                 
                 <div class="files-section" style="margin-top: 30px; display: none;" id="searchResultsSection">
                     <h3><i class="fas fa-search"></i> Search Results</h3>
-                    <ul class="files-list" id="searchResults"></ul>
+                    <div id="searchResultsContainer" class="files-container view-grid size-medium"></div>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- JavaScript -->
+    <script src="{% static 'js/utils.js' %}"></script>
+    <script src="{% static 'js/file-explorer.js' %}"></script>
+    <script src="{% static 'js/upload.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+    
+    <!-- Inline script for initialization -->
     <script>
-        // Get file name when file is selected
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose a file...';
-            document.getElementById('fileLabel').textContent = fileName;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize file explorer
+            initFileExplorer();
+            
+            // Initialize upload functionality
+            initUpload();
+            
+            // Initialize search functionality
+            initSearch();
         });
-        
-        function getCSRFToken() {
-            return document.cookie.split("; ")
-                .find(row => row.startsWith("csrftoken="))
-                ?.split("=")[1];
-        }
-        
-        const csrfToken = getCSRFToken() || "";
-        
-        // Load the user's file list on page load
-        document.addEventListener("DOMContentLoaded", fetchUserFiles);
-        
-        function getFileIcon(fileName) {
-            const extension = fileName.split('.').pop().toLowerCase();
-            
-            const iconMap = {
-                'pdf': 'fa-file-pdf',
-                'doc': 'fa-file-word',
-                'docx': 'fa-file-word',
-                'xls': 'fa-file-excel',
-                'xlsx': 'fa-file-excel',
-                'ppt': 'fa-file-powerpoint',
-                'pptx': 'fa-file-powerpoint',
-                'jpg': 'fa-file-image',
-                'jpeg': 'fa-file-image',
-                'png': 'fa-file-image',
-                'gif': 'fa-file-image',
-                'txt': 'fa-file-alt',
-                'zip': 'fa-file-archive',
-                'rar': 'fa-file-archive',
-                'mp3': 'fa-file-audio',
-                'mp4': 'fa-file-video',
-                'mov': 'fa-file-video'
-            };
-            
-            return iconMap[extension] || 'fa-file';
-        }
-        
-        async function fetchUserFiles() {
-            try {
-                let response = await fetch("/api/user/files/");
-                let data = await response.json();
-                let fileList = document.getElementById("fileList");
-                
-                fileList.innerHTML = "";  // Clear existing list
-                
-                if (data.files.length === 0) {
-                    fileList.innerHTML = '<li class="empty-message">No files uploaded yet.</li>';
-                    return;
-                }
-                
-                data.files.forEach(file => {
-                    let listItem = document.createElement("li");
-                    listItem.className = "file-item";
-                    
-                    // File icon based on extension
-                    let fileIcon = document.createElement("i");
-                    fileIcon.className = `fas ${getFileIcon(file.name)} file-icon`;
-                    
-                    // File name
-                    let fileName = document.createElement("span");
-                    fileName.className = "file-name";
-                    fileName.innerText = file.name;
-                    
-                    // File actions
-                    let fileActions = document.createElement("div");
-                    fileActions.className = "file-actions";
-                    
-                    // Download button
-                    let downloadButton = document.createElement("button");
-                    downloadButton.className = "file-btn download-btn";
-                    downloadButton.innerHTML = '<i class="fas fa-download"></i> Download';
-                    downloadButton.dataset.fileKey = file.key;
-                    downloadButton.addEventListener("click", downloadFile);
-                    
-                    // Delete button
-                    let deleteButton = document.createElement("button");
-                    deleteButton.className = "file-btn delete-btn";
-                    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
-                    deleteButton.dataset.fileKey = file.key;
-                    deleteButton.addEventListener("click", deleteFile);
-                    
-                    fileActions.appendChild(downloadButton);
-                    fileActions.appendChild(deleteButton);
-                    
-                    listItem.appendChild(fileIcon);
-                    listItem.appendChild(fileName);
-                    listItem.appendChild(fileActions);
-                    fileList.appendChild(listItem);
-                });
-            } catch (error) {
-                console.error("Error fetching files:", error);
-                document.getElementById("fileList").innerHTML = 
-                    '<li class="empty-message">Error loading files. Please try again.</li>';
-            }
-        }
-        
-        async function downloadFile(event) {
-            event.preventDefault();
-            
-            let fileKey = event.target.dataset.fileKey || event.target.parentElement.dataset.fileKey;
-            
-            try {
-                let response = await fetch("/api/user/file-url/", {
-                    method: "POST",
-                    body: JSON.stringify({ file_key: fileKey }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken
-                    },
-                });
-                
-                let data = await response.json();
-                if (data.presigned_url) {
-                    let tempLink = document.createElement("a");
-                    tempLink.href = data.presigned_url;
-                    tempLink.style.display = "none";
-                    tempLink.download = fileKey.split('/').pop(); // Extracts file name
-                    
-                    document.body.appendChild(tempLink);
-                    tempLink.click();  // Force browser to start download
-                    document.body.removeChild(tempLink); // Cleanup
-                } else {
-                    alert("Failed to generate download link.");
-                }
-            } catch (error) {
-                console.error("Error fetching pre-signed URL:", error);
-                alert("Error downloading file. Please try again.");
-            }
-        }
-        
-        async function deleteFile(event) {
-            event.preventDefault();
-            
-            let fileKey = event.target.dataset.fileKey || event.target.parentElement.dataset.fileKey;
-            let confirmation = confirm("Are you sure you want to delete this file?");
-            if (!confirmation) return;
-            
-            try {
-                let response = await fetch("/api/user/delete-file/", {
-                    method: "POST",
-                    body: JSON.stringify({ file_key: fileKey }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken
-                    },
-                });
-                
-                let data = await response.json();
-                if (data.message === "File deleted successfully") {
-                    fetchUserFiles();
-                } else {
-                    alert("Failed to delete file: " + data.error);
-                }
-            } catch (error) {
-                console.error("Error deleting file:", error);
-                alert("Error deleting file. Please try again.");
-            }
-        }
-        
-        function createFileListItem(file) {
-            let listItem = document.createElement("li");
-            listItem.className = "file-item";
-            
-            // File icon based on extension
-            let fileIcon = document.createElement("i");
-            fileIcon.className = `fas ${getFileIcon(file.name)} file-icon`;
-            
-            // File name
-            let fileName = document.createElement("span");
-            fileName.className = "file-name";
-            fileName.innerText = file.name;
-            
-            // File actions
-            let fileActions = document.createElement("div");
-            fileActions.className = "file-actions";
-            
-            // Download button
-            let downloadButton = document.createElement("button");
-            downloadButton.className = "file-btn download-btn";
-            downloadButton.innerHTML = '<i class="fas fa-download"></i> Download';
-            downloadButton.dataset.fileKey = file.key;
-            downloadButton.addEventListener("click", downloadFile);
-            
-            // Delete button
-            let deleteButton = document.createElement("button");
-            deleteButton.className = "file-btn delete-btn";
-            deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
-            deleteButton.dataset.fileKey = file.key;
-            deleteButton.addEventListener("click", deleteFile);
-            
-            fileActions.appendChild(downloadButton);
-            fileActions.appendChild(deleteButton);
-            
-            listItem.appendChild(fileIcon);
-            listItem.appendChild(fileName);
-            listItem.appendChild(fileActions);
-            
-            return listItem;
-        }
-        
-        // Search files
-        async function searchFiles() {
-            const query = document.getElementById("searchQuery").value;
-            if (!query) return;
-            
-            try {
-                let response = await fetch(`/api/user/search-files/?query=${query}`);
-                let data = await response.json();
-                let resultsList = document.getElementById("searchResults");
-                let resultsSection = document.getElementById("searchResultsSection");
-                
-                resultsList.innerHTML = "";
-                resultsSection.style.display = "block";
-                
-                if (data.files.length === 0) {
-                    resultsList.innerHTML = '<li class="empty-message">No matching files found.</li>';
-                    return;
-                }
-                
-                data.files.forEach(file => {
-                    resultsList.appendChild(createFileListItem(file));
-                });
-            } catch (error) {
-                console.error("Error searching files:", error);
-                document.getElementById("searchResults").innerHTML = 
-                    '<li class="empty-message">Error searching files. Please try again.</li>';
-            }
-        }
-        
-        // Add event listener for Enter key in search input
-        document.getElementById("searchQuery").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                searchFiles();
-            }
-        });
-        
-        async function startUpload() {
-            const fileInput = document.getElementById("fileInput");
-            const file = fileInput.files[0];
-            const progressContainer = document.getElementById("progressContainer");
-            const progressFill = document.getElementById("progressFill");
-            const progressText = document.getElementById("progressText");
-            
-            if (!file) {
-                alert("Please select a file!");
-                return;
-            }
-            
-            // Show progress container
-            progressContainer.style.display = "block";
-            
-            try {
-                // Starting multipart upload
-                let response = await fetch("/api/upload/multipart/start/", {
-                    method: "POST",
-                    body: JSON.stringify({ file_name: file.name }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken
-                    },
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to start upload: ${response.status}`);
-                }
-                
-                let { upload_id, object_key } = await response.json();
-                let chunkSize = 5 * 1024 * 1024; // 5MB per part
-                let totalParts = Math.ceil(file.size / chunkSize);
-                let uploadedParts = [];
-                
-                // Uploading each part
-                for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
-                    let start = (partNumber - 1) * chunkSize;
-                    let end = Math.min(start + chunkSize, file.size);
-                    let filePart = file.slice(start, end);
-                    
-                    // Getting presigned URL
-                    let presignedResp = await fetch("/api/upload/multipart/part/", {
-                        method: "POST",
-                        body: JSON.stringify({ object_key, upload_id, part_number: partNumber }),
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRFToken": csrfToken
-                        },
-                    });
-                    
-                    if (!presignedResp.ok) {
-                        throw new Error(`Failed to get presigned URL: ${presignedResp.status}`);
-                    }
-                    
-                    let { presigned_url } = await presignedResp.json();
-                    
-                    // Uploading chunk
-                    let uploadResponse = await fetch(presigned_url, {
-                        method: "PUT",
-                        body: filePart,
-                    });
-                    
-                    if (!uploadResponse.ok) {
-                        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
-                    }
-                    
-                    let etag = uploadResponse.headers.get("ETag");
-                    uploadedParts.push({ PartNumber: partNumber, ETag: etag });
-                    
-                    // Update progress bar
-                    let progress = Math.round((partNumber / totalParts) * 100);
-                    progressFill.style.width = `${progress}%`;
-                    progressText.textContent = `${progress}%`;
-                }
-                
-                // Completing the upload
-                let completeResponse = await fetch("/api/upload/multipart/complete/", {
-                    method: "POST",
-                    body: JSON.stringify({ object_key, upload_id, parts: uploadedParts }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken
-                    },
-                });
-                
-                if (!completeResponse.ok) {
-                    throw new Error(`Failed to complete upload: ${completeResponse.status}`);
-                }
-                
-                // Reset file input and progress
-                fileInput.value = "";
-                document.getElementById("fileLabel").textContent = "Choose a file...";
-                
-                // Refresh file list
-                fetchUserFiles();
-                
-                // Hide progress after a delay
-                setTimeout(() => {
-                    progressContainer.style.display = "none";
-                    progressFill.style.width = "0%";
-                    progressText.textContent = "0%";
-                }, 1500);
-                
-            } catch (error) {
-                console.error("Upload error:", error);
-                alert(`Upload failed: ${error.message}`);
-                progressContainer.style.display = "none";
-            }
-        }
     </script>
 </body>
 

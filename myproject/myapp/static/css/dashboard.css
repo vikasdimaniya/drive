@@ -1,0 +1,152 @@
+.upload-section {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px dashed #ccc;
+}
+
+.upload-section h3 {
+    margin-bottom: 15px;
+    color: #0078D7;
+    display: flex;
+    align-items: center;
+}
+
+.upload-section h3 i {
+    margin-right: 10px;
+}
+
+.file-input-container {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.custom-file-input {
+    position: relative;
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.custom-file-input input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-input-label {
+    display: block;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.upload-btn {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.upload-btn i {
+    margin-right: 5px;
+}
+
+.upload-btn:hover {
+    background-color: #005a9e;
+}
+
+.progress-container {
+    margin-top: 10px;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #0078D7;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    text-align: right;
+}
+
+.search-section {
+    margin-bottom: 20px;
+}
+
+.search-container {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.search-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #0078D7;
+}
+
+.search-btn {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-btn:hover {
+    background-color: #005a9e;
+}
+
+.files-section h3 {
+    margin-bottom: 15px;
+    color: #0078D7;
+    display: flex;
+    align-items: center;
+}
+
+.files-section h3 i {
+    margin-right: 10px;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 30px;
+    color: #777;
+    font-style: italic;
+} 

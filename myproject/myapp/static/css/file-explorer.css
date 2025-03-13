@@ -1,0 +1,207 @@
+/* View Options Bar */
+.view-options-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f5f5f7;
+    border-radius: 8px;
+    padding: 8px 15px;
+    margin-bottom: 20px;
+}
+
+.view-options, .view-size {
+    display: flex;
+    gap: 5px;
+}
+
+.view-option-btn, .size-option-btn {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.view-option-btn:hover, .size-option-btn:hover {
+    background-color: rgba(0, 120, 215, 0.1);
+    color: #0078D7;
+}
+
+.view-option-btn.active, .size-option-btn.active {
+    background-color: #0078D7;
+    color: white;
+}
+
+.sort-select {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #0078D7;
+}
+
+/* Files Container - Grid View (macOS Finder style) */
+.files-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 15px;
+}
+
+/* Grid View */
+.view-grid .file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.view-grid .file-item:hover {
+    background-color: rgba(0, 120, 215, 0.1);
+}
+
+.view-grid .file-item.selected {
+    background-color: rgba(0, 120, 215, 0.2);
+}
+
+.view-grid .file-icon {
+    font-size: 36px;
+    color: #0078D7;
+    margin-bottom: 10px;
+}
+
+.view-grid .file-name {
+    font-size: 13px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.view-grid .file-actions {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: none;
+}
+
+.view-grid .file-item:hover .file-actions {
+    display: flex;
+}
+
+/* List View */
+.view-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.view-list .file-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.view-list .file-item:hover {
+    background-color: rgba(0, 120, 215, 0.1);
+}
+
+.view-list .file-icon {
+    font-size: 20px;
+    color: #0078D7;
+    margin-right: 15px;
+}
+
+.view-list .file-name {
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.view-list .file-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* File Actions */
+.file-btn {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    color: #555;
+}
+
+.file-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.download-btn:hover {
+    color: #0078D7;
+}
+
+.delete-btn:hover {
+    color: #e81123;
+}
+
+/* Icon Size Variations */
+.size-small .file-item {
+    width: calc(20% - 15px);
+}
+
+.size-small .file-icon {
+    font-size: 24px;
+}
+
+.size-medium .file-item {
+    width: calc(16.666% - 15px);
+}
+
+.size-medium .file-icon {
+    font-size: 36px;
+}
+
+.size-large .file-item {
+    width: calc(12.5% - 15px);
+}
+
+.size-large .file-icon {
+    font-size: 48px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .size-small .file-item, .size-medium .file-item, .size-large .file-item {
+        width: calc(25% - 15px);
+    }
+}
+
+@media (max-width: 768px) {
+    .size-small .file-item, .size-medium .file-item, .size-large .file-item {
+        width: calc(33.333% - 15px);
+    }
+}
+
+@media (max-width: 576px) {
+    .size-small .file-item, .size-medium .file-item, .size-large .file-item {
+        width: calc(50% - 15px);
+    }
+} 
