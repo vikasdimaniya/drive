@@ -50,10 +50,64 @@ function initFileExplorer() {
         });
     });
     
-    // Set up sort select
-    document.getElementById('sortSelect').addEventListener('change', function() {
-        currentSort = this.value;
-        fetchUserFiles(1, currentSort, currentSortOrder);
+    // Set up sort option buttons
+    document.querySelectorAll('.sort-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            changeSort(this.dataset.sort);
+        });
+    });
+    
+    // Set up search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                searchFiles();
+            }
+        });
+    }
+    
+    const searchButton = document.getElementById('searchButton');
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            searchFiles();
+        });
+    }
+    
+    // Initialize trash functionality if available
+    if (typeof initTrash === 'function') {
+        initTrash();
+    }
+    
+    // Set up tab navigation
+    setupTabNavigation();
+}
+
+// Set up tab navigation
+function setupTabNavigation() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Hide all tab contents
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Show the corresponding tab content
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId + 'Content').classList.add('active');
+            
+            // If trash tab is clicked, load trash
+            if (tabId === 'trash' && typeof loadTrash === 'function') {
+                loadTrash();
+            }
+        });
     });
 }
 
@@ -164,9 +218,9 @@ function createGridViewItem(file) {
     const shareButton = document.createElement("button");
     shareButton.className = "file-btn share-file-btn";
     shareButton.innerHTML = '<i class="fas fa-share-alt"></i>';
-    shareButton.title = "Share";
+    shareButton.title = 'Share';
     shareButton.addEventListener("click", function(e) {
-        console.log("Share button clicked directly");
+        console.log("Share button clicked directly (grid view)");
         e.stopPropagation();
         // Directly call createShareLink if it exists
         if (typeof createShareLink === 'function') {
@@ -180,25 +234,30 @@ function createGridViewItem(file) {
     const downloadButton = document.createElement("button");
     downloadButton.className = "file-btn download-btn";
     downloadButton.innerHTML = '<i class="fas fa-download"></i>';
-    downloadButton.title = "Download";
+    downloadButton.title = 'Download';
     downloadButton.addEventListener("click", function(e) {
         e.stopPropagation();
         downloadFile(file.key);
     });
     
-    // Delete button
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "file-btn delete-btn";
-    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-    deleteButton.title = "Delete";
-    deleteButton.addEventListener("click", function(e) {
+    // Trash button
+    const trashButton = document.createElement('button');
+    trashButton.className = 'file-btn trash-btn';
+    trashButton.innerHTML = '<i class="fas fa-trash"></i>';
+    trashButton.title = 'Move to Trash';
+    trashButton.addEventListener('click', function(e) {
         e.stopPropagation();
-        deleteFile(file.key);
+        if (typeof moveToTrash === 'function') {
+            moveToTrash(file.key, file.name);
+        } else {
+            console.error("moveToTrash function not found");
+            alert("Trash functionality is not available");
+        }
     });
     
     fileActions.appendChild(shareButton);
     fileActions.appendChild(downloadButton);
-    fileActions.appendChild(deleteButton);
+    fileActions.appendChild(trashButton);
     
     fileItem.appendChild(fileIcon);
     fileItem.appendChild(fileName);
@@ -277,18 +336,23 @@ function createListViewItem(file) {
         downloadFile(file.key);
     });
     
-    // Delete button
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "file-btn delete-btn";
-    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
-    deleteButton.addEventListener("click", function(e) {
+    // Trash button
+    const trashButton = document.createElement('button');
+    trashButton.className = 'file-btn trash-btn';
+    trashButton.innerHTML = '<i class="fas fa-trash"></i> Trash';
+    trashButton.addEventListener('click', function(e) {
         e.stopPropagation();
-        deleteFile(file.key);
+        if (typeof moveToTrash === 'function') {
+            moveToTrash(file.key, file.name);
+        } else {
+            console.error("moveToTrash function not found");
+            alert("Trash functionality is not available");
+        }
     });
     
     fileActions.appendChild(shareButton);
     fileActions.appendChild(downloadButton);
-    fileActions.appendChild(deleteButton);
+    fileActions.appendChild(trashButton);
     
     fileItem.appendChild(fileIcon);
     fileItem.appendChild(fileName);

@@ -4,7 +4,8 @@ from .views import (
     dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, 
     list_user_files, get_presigned_url, delete_user_file, search_user_files, signup, home, 
     create_shared_link, access_shared_file, list_shared_with_me, list_shared_by_me, revoke_access,
-    refresh_shared_files, remove_shared_with_me
+    refresh_shared_files, remove_shared_with_me, list_trash, move_to_trash, restore_from_trash, empty_trash,
+    debug_shared_link
 )
 
 urlpatterns = [
@@ -42,5 +43,14 @@ urlpatterns = [
     path("api/user/revoke-access/", revoke_access, name="revoke-access"),
     path("api/user/remove-shared-with-me/", remove_shared_with_me, name="remove-shared-with-me"),
     path("api/user/refresh-shared-files/", refresh_shared_files, name="refresh-shared-files"),
+
+    # Trash management
+    path("api/user/trash/", list_trash, name="list-trash"),
+    path("api/user/move-to-trash/", move_to_trash, name="move-to-trash"),
+    path("api/user/restore-from-trash/", restore_from_trash, name="restore-from-trash"),
+    path("api/user/empty-trash/", empty_trash, name="empty-trash"),
+
+    # Debug shared link
+    path("api/debug/shared-link/<str:token>/", debug_shared_link, name="debug-shared-link"),
 ]
 

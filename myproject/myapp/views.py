@@ -14,6 +14,8 @@ from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
+from django.utils import timezone
+import logging
 
 # Initializing MinIO client
 s3_client = boto3.client(
@@ -22,6 +24,8 @@ s3_client = boto3.client(
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
 )
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     """Redirect to login page from root URL"""
@@ -201,8 +205,8 @@ def list_user_files(request):
     else:
         order_by = f'-{sort_field}'
     
-    # Query database for files
-    user_files = FileMetadata.objects.filter(user=request.user).order_by(order_by)
+    # Query database for files - exclude trashed files
+    user_files = FileMetadata.objects.filter(user=request.user, trashed=False).order_by(order_by)
     
     # Create paginator
     paginator = Paginator(user_files, page_size)
@@ -293,7 +297,7 @@ def delete_user_file(request):
 def search_user_files(request):
     """Search for a file uploaded by the logged-in user with pagination and sorting"""
     query = request.GET.get("query", "").lower().strip()
-    
+
     if not query:
         return JsonResponse({"error": "Query parameter is required"}, status=400)
     
@@ -322,10 +326,11 @@ def search_user_files(request):
     else:
         order_by = f'-{sort_field}'
     
-    # Query database for files
+    # Query database for files - exclude trashed files
     user_files = FileMetadata.objects.filter(
         user=request.user, 
-        file_name__icontains=query
+        file_name__icontains=query,
+        trashed=False
     ).order_by(order_by)
     
     # Create paginator
@@ -649,5 +654,183 @@ def remove_shared_with_me(request):
         return JsonResponse({"message": "File removed from your shared files"})
     except SharedLink.DoesNotExist:
         return JsonResponse({"error": "Shared link not found or you don't have permission"}, status=404)
+
+@login_required
+def move_to_trash(request):
+    """
+    Move a file to trash.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        file_key = data.get('file_key')
+        
+        if not file_key:
+            return JsonResponse({'error': 'File key is required'}, status=400)
+        
+        # Get the file metadata
+        file = FileMetadata.objects.get(user=request.user, file_path=file_key)
+        
+        # Mark as trashed and set trash date
+        file.trashed = True
+        file.trash_date = timezone.now()
+        file.save()
+        
+        logger.info(f"File moved to trash: {file_key} by user {request.user.username}")
+        
+        return JsonResponse({'message': f"File '{file.file_name}' moved to trash"})
+    except FileMetadata.DoesNotExist:
+        logger.error(f"File not found for trash: {file_key}")
+        return JsonResponse({'error': 'File not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error moving file to trash: {str(e)}")
+        return JsonResponse({'error': 'Failed to move file to trash'}, status=500)
+
+@login_required
+def restore_from_trash(request):
+    """
+    Restore a file from trash.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        file_key = data.get('file_key')
+        
+        if not file_key:
+            return JsonResponse({'error': 'File key is required'}, status=400)
+        
+        # Get the file metadata
+        file = FileMetadata.objects.get(user=request.user, file_path=file_key, trashed=True)
+        
+        # Restore from trash
+        file.trashed = False
+        file.trash_date = None
+        file.save()
+        
+        logger.info(f"File restored from trash: {file_key} by user {request.user.username}")
+        
+        return JsonResponse({'message': f"File '{file.file_name}' restored from trash"})
+    except FileMetadata.DoesNotExist:
+        logger.error(f"File not found for restore: {file_key}")
+        return JsonResponse({'error': 'File not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error restoring file from trash: {str(e)}")
+        return JsonResponse({'error': 'Failed to restore file from trash'}, status=500)
+
+@login_required
+def list_trash(request):
+    """
+    List all files in the user's trash.
+    """
+    try:
+        # Get all trashed files for the current user
+        trashed_files = FileMetadata.objects.filter(
+            user=request.user,
+            trashed=True
+        ).order_by('-trash_date')
+        
+        # Calculate days remaining before permanent deletion
+        files_data = []
+        for file in trashed_files:
+            # Calculate days remaining (30 days from trash_date)
+            if file.trash_date:
+                days_passed = (timezone.now() - file.trash_date).days
+                days_remaining = max(0, 30 - days_passed)
+            else:
+                days_remaining = 30
+            
+            files_data.append({
+                'name': file.file_name,
+                'key': file.file_path,
+                'size': file.file_size,
+                'type': file.file_type,
+                'upload_date': file.upload_date.isoformat() if file.upload_date else None,
+                'last_modified': file.last_modified.isoformat() if file.last_modified else None,
+                'trash_date': file.trash_date.isoformat() if file.trash_date else None,
+                'days_remaining': days_remaining
+            })
+        
+        return JsonResponse({'files': files_data})
+    except Exception as e:
+        logger.error(f"Error listing trash: {str(e)}")
+        return JsonResponse({'error': 'Failed to list trash'}, status=500)
+
+@login_required
+def empty_trash(request):
+    """
+    Permanently delete all files in trash.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
+    
+    try:
+        # Get all trashed files for the current user
+        trashed_files = FileMetadata.objects.filter(
+            user=request.user,
+            trashed=True
+        )
+        
+        count = trashed_files.count()
+        
+        if count == 0:
+            return JsonResponse({'message': 'Trash is already empty'})
+        
+        # Delete files from storage
+        for file in trashed_files:
+            try:
+                # Delete from MinIO
+                s3_client.delete_object(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    Key=file.file_path
+                )
+                logger.info(f"File deleted from storage: {file.file_path}")
+            except Exception as e:
+                logger.error(f"Error deleting file from storage: {file.file_path}, error: {str(e)}")
+        
+        # Delete metadata from database
+        trashed_files.delete()
+        
+        logger.info(f"Trash emptied by user {request.user.username}, {count} files deleted")
+        
+        return JsonResponse({'message': f"Trash emptied. {count} files permanently deleted."})
+    except Exception as e:
+        logger.error(f"Error emptying trash: {str(e)}")
+        return JsonResponse({'error': 'Failed to empty trash'}, status=500)
+
+@login_required
+def debug_shared_link(request, token):
+    """
+    Debug endpoint to check the status of a shared link.
+    For development purposes only.
+    """
+    try:
+        # Get the shared link
+        shared_link = SharedLink.objects.get(token=token)
+        
+        # Format response data
+        response_data = {
+            'token': str(shared_link.token),
+            'file_key': shared_link.file_key,
+            'file_name': shared_link.file_name,
+            'owner': shared_link.owner.username,
+            'created_at': shared_link.created_at.isoformat(),
+            'expires_at': shared_link.expires_at.isoformat() if shared_link.expires_at else None,
+            'is_active': shared_link.is_active,
+            'shared_with': shared_link.shared_with.username if shared_link.shared_with else None
+        }
+        
+        logger.info(f"Debug shared link: {token} by user {request.user.username}")
+        
+        return JsonResponse(response_data)
+    except SharedLink.DoesNotExist:
+        logger.error(f"Shared link not found for debug: {token}")
+        return JsonResponse({'error': 'Shared link not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error debugging shared link: {str(e)}")
+        return JsonResponse({'error': 'Failed to debug shared link'}, status=500)
 
 

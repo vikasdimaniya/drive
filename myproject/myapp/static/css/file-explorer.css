@@ -237,4 +237,52 @@
     opacity: 0.7;
     background-color: #f8f8f8;
     border-left: 3px solid #f39c12;
+}
+
+/* Trash specific styles */
+.restore-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.restore-btn:hover {
+    background-color: #2980b9;
+}
+
+.days-remaining {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.empty-trash-btn {
+    background-color: #e74c3c;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.empty-trash-btn:hover {
+    background-color: #c0392b;
+}
+
+.trash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.trash-title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.trash-info {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-bottom: 15px;
 } 

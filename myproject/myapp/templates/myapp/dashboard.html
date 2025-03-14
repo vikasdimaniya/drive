@@ -44,7 +44,7 @@
                 <ul class="sidebar-menu">
                     <li><a href="#" class="active" id="myFilesTab"><i class="fas fa-home"></i> My Files</a></li>
                     <li><a href="#" id="sharedFilesTab"><i class="fas fa-share-alt"></i> Shared Files</a></li>
-                    <li><a href="#"><i class="fas fa-trash"></i> Trash</a></li>
+                    <li><a href="#" id="trashTab"><i class="fas fa-trash"></i> Trash</a></li>
                     <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
                 </ul>
             </div>
@@ -56,7 +56,7 @@
                         <h3><i class="fas fa-cloud-upload-alt"></i> Upload Files</h3>
                         <div class="file-input-container">
                             <div class="custom-file-input">
-                                <input type="file" id="fileInput">
+    <input type="file" id="fileInput">
                                 <div class="file-input-label" id="fileLabel">Choose a file...</div>
                             </div>
                             <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload</button>
@@ -157,6 +157,20 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Trash Section -->
+                <div id="trashSection" class="content-section">
+                    <div class="trash-header">
+                        <div class="trash-title"><i class="fas fa-trash"></i> Trash</div>
+                        <button id="emptyTrashBtn" class="empty-trash-btn" onclick="emptyTrash()">
+                            <i class="fas fa-trash-alt"></i> Empty Trash
+                        </button>
+                    </div>
+                    <p class="trash-info">Files in trash will be automatically deleted after 30 days. You can restore files from trash or empty the trash to permanently delete all files.</p>
+                    <div id="trashContainer" class="files-container view-list">
+                        <div class="empty-message">Loading trash...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -167,6 +181,7 @@
     <script src="{% static 'js/upload.js' %}"></script>
     <script src="{% static 'js/search.js' %}"></script>
     <script src="{% static 'js/share.js' %}"></script>
+    <script src="{% static 'js/trash.js' %}"></script>
     
     <!-- Inline script for initialization -->
     <script>
@@ -195,38 +210,67 @@
             // Initialize share functionality
             initShare();
             
+            // Initialize trash functionality
+            initTrash();
+            
             // Tab navigation
             const myFilesTab = document.getElementById('myFilesTab');
             const sharedFilesTab = document.getElementById('sharedFilesTab');
+            const trashTab = document.getElementById('trashTab');
             const myFilesSection = document.getElementById('myFilesSection');
             const sharedFilesSection = document.getElementById('sharedFilesSection');
+            const trashSection = document.getElementById('trashSection');
             
-            if (myFilesTab && sharedFilesTab && myFilesSection && sharedFilesSection) {
+            if (myFilesTab && sharedFilesTab && trashTab && myFilesSection && sharedFilesSection && trashSection) {
                 myFilesTab.addEventListener('click', function(e) {
                     e.preventDefault();
                     // Remove active class from all tabs
-                    myFilesTab.classList.remove('active');
-                    sharedFilesTab.classList.remove('active');
+                    document.querySelectorAll('.sidebar-menu a').forEach(tab => tab.classList.remove('active'));
                     // Add active class to clicked tab
                     myFilesTab.classList.add('active');
                     
-                    myFilesSection.classList.add('active');
+                    // Hide all sections
+                    myFilesSection.classList.remove('active');
                     sharedFilesSection.classList.remove('active');
+                    trashSection.classList.remove('active');
+                    // Show clicked section
+                    myFilesSection.classList.add('active');
                 });
                 
                 sharedFilesTab.addEventListener('click', function(e) {
                     e.preventDefault();
                     // Remove active class from all tabs
-                    myFilesTab.classList.remove('active');
-                    sharedFilesTab.classList.remove('active');
+                    document.querySelectorAll('.sidebar-menu a').forEach(tab => tab.classList.remove('active'));
                     // Add active class to clicked tab
                     sharedFilesTab.classList.add('active');
                     
-                    sharedFilesSection.classList.add('active');
+                    // Hide all sections
                     myFilesSection.classList.remove('active');
+                    sharedFilesSection.classList.remove('active');
+                    trashSection.classList.remove('active');
+                    // Show clicked section
+                    sharedFilesSection.classList.add('active');
                     
                     // Load shared files when tab is clicked
                     loadSharedWithMe();
+                });
+                
+                trashTab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.sidebar-menu a').forEach(tab => tab.classList.remove('active'));
+                    // Add active class to clicked tab
+                    trashTab.classList.add('active');
+                    
+                    // Hide all sections
+                    myFilesSection.classList.remove('active');
+                    sharedFilesSection.classList.remove('active');
+                    trashSection.classList.remove('active');
+                    // Show clicked section
+                    trashSection.classList.add('active');
+                    
+                    // Load trash when tab is clicked
+                    loadTrash();
                 });
             }
             
