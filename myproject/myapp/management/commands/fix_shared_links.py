@@ -35,7 +35,8 @@ class Command(BaseCommand):
             shared_links = SharedLink.objects.filter(
                 query,
                 shared_with__isnull=True,
-                is_active=True
+                is_active=True,
+                removed_by_recipient=False
             )
             
             count = shared_links.count()

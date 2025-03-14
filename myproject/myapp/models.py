@@ -26,6 +26,7 @@ class SharedLink(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_email_sent = models.BooleanField(default=False)
+    removed_by_recipient = models.BooleanField(default=False, help_text="Indicates if the recipient has removed this shared file from their view")
     
     def __str__(self):
         recipient = self.shared_with.username if self.shared_with else self.shared_with_email

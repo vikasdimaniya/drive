@@ -140,6 +140,7 @@
                                     <i class="fas fa-sync-alt"></i> Refresh
                                 </button>
                             </h3>
+                            <p class="help-text">You can download files shared with you or remove them from your list. Removing a file only removes it from your view and doesn't affect the original file.</p>
                             <div id="sharedWithMeContainer" class="files-container view-list">
                                 <div class="empty-message">Loading shared files...</div>
                             </div>
@@ -149,6 +150,7 @@
                     <div class="shared-content" id="sharedByMeContent">
                         <div class="files-section">
                             <h3><i class="fas fa-share-square"></i> Files You've Shared</h3>
+                            <p class="help-text">You can revoke access to files you've shared. Once revoked, the recipient will no longer be able to access the file.</p>
                             <div id="sharedByMeContainer" class="files-container view-list">
                                 <div class="empty-message">Loading shared files...</div>
                             </div>
@@ -202,10 +204,10 @@
             if (myFilesTab && sharedFilesTab && myFilesSection && sharedFilesSection) {
                 myFilesTab.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const activeTab = myFilesTab.parentElement.querySelector('a.active');
-                    if (activeTab) {
-                        activeTab.classList.remove('active');
-                    }
+                    // Remove active class from all tabs
+                    myFilesTab.classList.remove('active');
+                    sharedFilesTab.classList.remove('active');
+                    // Add active class to clicked tab
                     myFilesTab.classList.add('active');
                     
                     myFilesSection.classList.add('active');
@@ -214,10 +216,10 @@
                 
                 sharedFilesTab.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const activeTab = sharedFilesTab.parentElement.querySelector('a.active');
-                    if (activeTab) {
-                        activeTab.classList.remove('active');
-                    }
+                    // Remove active class from all tabs
+                    myFilesTab.classList.remove('active');
+                    sharedFilesTab.classList.remove('active');
+                    // Add active class to clicked tab
                     sharedFilesTab.classList.add('active');
                     
                     sharedFilesSection.classList.add('active');

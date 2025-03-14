@@ -65,6 +65,7 @@ def associate_shared_files_with_user(user):
         return 0
     
     # Find shared links that match the user's email OR username but aren't associated with the user
+    # Also exclude files that have been removed by the recipient
     query = Q()
     if user.email:
         query |= Q(shared_with_email=user.email)
@@ -75,7 +76,8 @@ def associate_shared_files_with_user(user):
     shared_links = SharedLink.objects.filter(
         query,
         shared_with__isnull=True,
-        is_active=True
+        is_active=True,
+        removed_by_recipient=False
     )
     
     # Log the number of links found
@@ -403,6 +405,33 @@ def create_shared_link(request):
             print(f"Recipient user not found for email/username: {recipient_email}")
             pass
     
+    # Check if the file is already shared with this recipient
+    existing_share = SharedLink.objects.filter(
+        file=file_metadata,
+        owner=request.user,
+        is_active=True,
+    )
+    
+    # Check by user if recipient_user exists, otherwise check by email
+    if recipient_user:
+        existing_share = existing_share.filter(shared_with=recipient_user)
+    else:
+        existing_share = existing_share.filter(shared_with_email=recipient_email)
+    
+    if existing_share.exists():
+        # File is already shared with this recipient
+        existing_link = existing_share.first()
+        share_url = f"{request.scheme}://{request.get_host()}/shared/{existing_link.token}"
+        
+        return JsonResponse({
+            "error": "This file is already shared with this recipient",
+            "share_url": share_url,
+            "expires_at": existing_link.expires_at.isoformat() if existing_link.expires_at else None,
+            "token": str(existing_link.token),
+            "recipient": recipient_user.username if recipient_user else recipient_email,
+            "already_shared": True
+        }, status=409)  # 409 Conflict
+    
     # Create a shared link
     shared_link = SharedLink.objects.create(
         file=file_metadata,
@@ -480,15 +509,17 @@ def access_shared_file(request, token):
 def list_shared_with_me(request):
     """List all files shared with the logged-in user"""
     # Get the current user's email
-    user_email = request.user.email
+    user_email = request.user.email or request.user.username
     
     # Log debugging information
     print(f"Searching for files shared with user: {request.user.username}, email: {user_email}")
     
     # Get files shared directly with the user (by user ID or email)
+    # Exclude files that have been removed by the recipient
     shared_links = SharedLink.objects.filter(
-        Q(shared_with=request.user) | Q(shared_with_email=user_email),
-        is_active=True
+        (Q(shared_with=request.user) | Q(shared_with_email=user_email)),
+        is_active=True,
+        removed_by_recipient=False
     ).select_related('file', 'owner')
     
     # Log the number of shared links found
@@ -549,10 +580,73 @@ def revoke_access(request):
         return JsonResponse({"error": "Token is required"}, status=400)
     
     try:
+        # Log the revoke request
+        print(f"Revoking access for token: {token}, requested by user: {request.user.username}")
+        
         shared_link = SharedLink.objects.get(token=token, owner=request.user)
+        
+        # Log the shared link details
+        print(f"Found shared link: {shared_link.file.file_name}, shared with: {shared_link.shared_with.username if shared_link.shared_with else shared_link.shared_with_email}")
+        
         shared_link.is_active = False
         shared_link.save()
-        return JsonResponse({"message": "Access revoked successfully"})
+        
+        # Log the successful revocation
+        print(f"Successfully revoked access for token: {token}")
+        
+        return JsonResponse({
+            "message": "Access revoked successfully",
+            "file_name": shared_link.file.file_name,
+            "shared_with": shared_link.shared_with.username if shared_link.shared_with else shared_link.shared_with_email
+        })
+    except SharedLink.DoesNotExist:
+        # Log the error
+        print(f"Shared link not found for token: {token}, requested by user: {request.user.username}")
+        
+        return JsonResponse({"error": "Shared link not found or you don't have permission"}, status=404)
+
+@login_required
+def remove_shared_with_me(request):
+    """Remove a file that has been shared with the current user"""
+    data = json.loads(request.body)
+    token = data.get("token")
+    
+    if not token:
+        return JsonResponse({"error": "Token is required"}, status=400)
+    
+    try:
+        # Find the shared link where the current user is the recipient
+        # We need to check both shared_with and shared_with_email fields
+        user_email = request.user.email or request.user.username
+        
+        # First try to find by direct user association
+        try:
+            shared_link = SharedLink.objects.get(
+                token=token, 
+                shared_with=request.user,
+                is_active=True
+            )
+        except SharedLink.DoesNotExist:
+            # If not found, try by email
+            shared_link = SharedLink.objects.get(
+                token=token, 
+                shared_with_email=user_email,
+                is_active=True
+            )
+        
+        # Log the removal for debugging
+        print(f"Removing shared file '{shared_link.file.file_name}' from user {request.user.username}")
+        
+        # Instead of deleting the link, we'll just remove the association with the current user
+        # This way, the owner still sees that they've shared the file, but the recipient won't see it anymore
+        shared_link.shared_with = None
+        
+        # Also add a flag to indicate this user has removed it
+        # We'll need to add this field to the model
+        shared_link.removed_by_recipient = True
+        shared_link.save()
+        
+        return JsonResponse({"message": "File removed from your shared files"})
     except SharedLink.DoesNotExist:
         return JsonResponse({"error": "Shared link not found or you don't have permission"}, status=404)
 

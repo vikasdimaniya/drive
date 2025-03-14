@@ -140,26 +140,46 @@
 
 /* File Actions */
 .file-btn {
-    background-color: transparent;
+    padding: 5px 10px;
+    margin: 0 5px;
     border: none;
     border-radius: 4px;
-    padding: 5px;
     cursor: pointer;
     font-size: 12px;
-    transition: all 0.2s;
-    color: #555;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
 }
 
-.file-btn:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+.file-btn i {
+    margin-right: 5px;
+}
+
+.download-btn {
+    background-color: #3498db;
+    color: white;
 }
 
 .download-btn:hover {
-    color: #0078D7;
+    background-color: #2980b9;
 }
 
-.delete-btn:hover {
-    color: #e81123;
+.remove-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.remove-btn:hover {
+    background-color: #c0392b;
+}
+
+.revoke-access-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.revoke-access-btn:hover {
+    background-color: #c0392b;
 }
 
 /* Icon Size Variations */
@@ -204,4 +224,17 @@
     .size-small .file-item, .size-medium .file-item, .size-large .file-item {
         width: calc(50% - 15px);
     }
+}
+
+/* File item status */
+.file-item.revoked {
+    opacity: 0.7;
+    background-color: #f8f8f8;
+    border-left: 3px solid #e74c3c;
+}
+
+.file-item.expired {
+    opacity: 0.7;
+    background-color: #f8f8f8;
+    border-left: 3px solid #f39c12;
 } 

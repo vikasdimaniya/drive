@@ -4,7 +4,7 @@ from .views import (
     dashboard, create_multipart_upload, get_part_presigned_url, complete_multipart_upload, 
     list_user_files, get_presigned_url, delete_user_file, search_user_files, signup, home, 
     create_shared_link, access_shared_file, list_shared_with_me, list_shared_by_me, revoke_access,
-    refresh_shared_files
+    refresh_shared_files, remove_shared_with_me
 )
 
 urlpatterns = [
@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/user/shared-with-me/", list_shared_with_me, name="shared-with-me"),
     path("api/user/shared-by-me/", list_shared_by_me, name="shared-by-me"),
     path("api/user/revoke-access/", revoke_access, name="revoke-access"),
+    path("api/user/remove-shared-with-me/", remove_shared_with_me, name="remove-shared-with-me"),
     path("api/user/refresh-shared-files/", refresh_shared_files, name="refresh-shared-files"),
 ]
 

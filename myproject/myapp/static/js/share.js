@@ -99,11 +99,46 @@ window.createShareLink = function(fileKey, fileName) {
                 })
             });
             
+            const data = await response.json();
+            
+            // Check if the file is already shared with this recipient (status 409)
+            if (response.status === 409 && data.already_shared) {
+                console.log('File already shared with this recipient:', data);
+                
+                // Show the share result with a different message
+                const shareResult = modal.querySelector('.share-result');
+                shareResult.style.display = 'block';
+                shareResult.querySelector('p:first-child').innerHTML = 
+                    '<span style="color: #e74c3c;"><i class="fas fa-info-circle"></i> This file is already shared with this recipient.</span>';
+                
+                modal.querySelector('#shareLink').value = data.share_url;
+                
+                // Update button
+                createLinkBtn.innerHTML = 'Try Different Recipient';
+                createLinkBtn.disabled = false;
+                
+                // Setup copy button
+                const copyBtn = modal.querySelector('#copyLinkBtn');
+                copyBtn.addEventListener('click', () => {
+                    const linkInput = modal.querySelector('#shareLink');
+                    linkInput.select();
+                    document.execCommand('copy');
+                    
+                    // Show copied notification
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                });
+                
+                return;
+            }
+            
+            // If response is not OK and not the already shared case
             if (!response.ok) {
                 throw new Error('Failed to share file');
             }
-            
-            const data = await response.json();
             
             // Show the share result
             modal.querySelector('.share-result').style.display = 'block';
@@ -176,6 +211,19 @@ window.initShare = function() {
                 revokeAccess(token, fileName);
             }
         }
+        
+        // Listen for remove shared with me button clicks
+        if (e.target.classList.contains('remove-btn') || e.target.closest('.remove-btn')) {
+            const fileItem = e.target.closest('.file-item');
+            if (!fileItem) return; // Add null check
+            
+            const token = fileItem.dataset.token;
+            const fileName = fileItem.dataset.name;
+            
+            if (token && fileName) {
+                removeSharedWithMe(token, fileName);
+            }
+        }
     });
     
     // Initialize shared tabs if they exist
@@ -236,6 +284,13 @@ window.initShare = function() {
  */
 window.revokeAccess = function(token, fileName) {
     if (confirm(`Are you sure you want to revoke access to "${fileName}"?`)) {
+        // First, update the UI immediately for better user experience
+        const fileItem = document.querySelector(`.file-item[data-token="${token}"]`);
+        if (fileItem) {
+            fileItem.style.opacity = '0.5';
+            fileItem.style.pointerEvents = 'none';
+        }
+        
         fetch('/api/user/revoke-access/', {
             method: 'POST',
             headers: {
@@ -249,16 +304,110 @@ window.revokeAccess = function(token, fileName) {
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                alert('Access revoked successfully');
-                // Refresh the shared by me list
-                loadSharedByMe();
+                console.log('Access revoked successfully:', data.message);
+                
+                // Update the UI to show the file as revoked
+                if (fileItem) {
+                    fileItem.classList.add('revoked');
+                    
+                    // Update the status badge
+                    const statusBadge = fileItem.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge inactive';
+                        statusBadge.textContent = 'Inactive';
+                    }
+                    
+                    // Remove the revoke button
+                    const revokeButton = fileItem.querySelector('.revoke-access-btn');
+                    if (revokeButton) {
+                        revokeButton.remove();
+                    }
+                    
+                    // Restore normal appearance
+                    fileItem.style.opacity = '1';
+                    fileItem.style.pointerEvents = 'auto';
+                }
             } else {
                 alert('Error: ' + data.error);
+                // Restore the file item if there was an error
+                if (fileItem) {
+                    fileItem.style.opacity = '1';
+                    fileItem.style.pointerEvents = 'auto';
+                }
             }
         })
         .catch(error => {
             console.error('Error revoking access:', error);
             alert('Failed to revoke access. Please try again.');
+            // Restore the file item if there was an error
+            if (fileItem) {
+                fileItem.style.opacity = '1';
+                fileItem.style.pointerEvents = 'auto';
+            }
+        });
+    }
+};
+
+/**
+ * Remove a file that has been shared with the current user
+ * @param {string} token - The shared link token
+ * @param {string} fileName - The file name for display
+ */
+window.removeSharedWithMe = function(token, fileName) {
+    if (confirm(`Are you sure you want to remove "${fileName}" from your shared files?`)) {
+        // First, remove the file from the UI immediately for better user experience
+        const fileItem = document.querySelector(`.file-item[data-token="${token}"]`);
+        if (fileItem) {
+            fileItem.style.opacity = '0.5';
+            fileItem.style.pointerEvents = 'none';
+        }
+        
+        fetch('/api/user/remove-shared-with-me/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                token: token
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                console.log('File removed successfully:', data.message);
+                
+                // Remove the file from the UI completely
+                if (fileItem) {
+                    fileItem.remove();
+                }
+                
+                // Check if there are any files left
+                const container = document.getElementById('sharedWithMeContainer');
+                if (container && container.querySelectorAll('.file-item').length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-message">
+                            <p>No files have been shared with you.</p>
+                            <p class="help-text">If you're expecting shared files, try clicking the refresh button above.</p>
+                        </div>`;
+                }
+            } else {
+                alert('Error: ' + data.error);
+                // Restore the file item if there was an error
+                if (fileItem) {
+                    fileItem.style.opacity = '1';
+                    fileItem.style.pointerEvents = 'auto';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error removing shared file:', error);
+            alert('Failed to remove file. Please try again.');
+            // Restore the file item if there was an error
+            if (fileItem) {
+                fileItem.style.opacity = '1';
+                fileItem.style.pointerEvents = 'auto';
+            }
         });
     }
 };
@@ -300,7 +449,7 @@ window.loadSharedWithMe = function() {
             container.innerHTML = '';
             
             data.files.forEach(file => {
-                console.log(`Processing shared file: ${file.name} shared by ${file.shared_by}`);
+                console.log(`Processing shared file: ${file.name} shared by ${file.shared_by}, token: ${file.token}`);
                 
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
@@ -334,7 +483,16 @@ window.loadSharedWithMe = function() {
                     downloadFile(file.key);
                 });
                 
+                const removeButton = document.createElement('button');
+                removeButton.className = 'file-btn remove-btn';
+                removeButton.innerHTML = '<i class="fas fa-times"></i> Remove';
+                removeButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeSharedWithMe(file.token, file.name);
+                });
+                
                 fileActions.appendChild(downloadButton);
+                fileActions.appendChild(removeButton);
                 
                 fileItem.appendChild(fileIcon);
                 fileItem.appendChild(fileName);
@@ -412,7 +570,8 @@ window.loadSharedByMe = function() {
                     revokeButton.innerHTML = '<i class="fas fa-ban"></i> Revoke Access';
                     revokeButton.addEventListener('click', function(e) {
                         e.stopPropagation();
-                        // The revoke functionality is handled by the event listener
+                        // Call the revokeAccess function directly
+                        revokeAccess(file.token, file.name);
                     });
                     
                     fileActions.appendChild(revokeButton);
