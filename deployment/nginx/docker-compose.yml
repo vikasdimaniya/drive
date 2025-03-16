@@ -9,6 +9,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./GeoLite2-Country.mmdb:/etc/nginx/GeoLite2-Country.mmdb:ro
+      - ../../myproject/myapp/static:/app/myproject/myapp/static:ro  # Mount static files
     restart: always
 
 networks:
