@@ -42,6 +42,12 @@ AWS_S3_CUSTOM_DOMAIN = f"{os.environ.get('DOMAIN')}/s3"  # For nginx routing
 AWS_S3_URL_PROTOCOL = 'http:'
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
+# CORS settings for S3
+AWS_S3_CORS_ENABLED = True
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = True
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+
 # Static files
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage' 

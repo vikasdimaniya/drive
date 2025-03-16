@@ -17,7 +17,7 @@ services:
       - DB_PORT=${DB_PORT:-5432}
       - PORT=${PORT:-3011}
       # S3/MinIO settings
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://localhost:9000}  # Changed to localhost for browser access
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-admin123}
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
