@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build:
@@ -20,6 +18,8 @@ services:
       - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
       - "${PORT:-3011}:${PORT:-3011}"
+    networks:
+      - minio-network
 
 volumes:
   static_volume: 
