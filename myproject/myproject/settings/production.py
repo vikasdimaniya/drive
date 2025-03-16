@@ -33,7 +33,12 @@ DATABASES = {
 # SECURE_HSTS_PRELOAD = True
 
 # MinIO/S3 settings
+# Internal endpoint for Django to connect to MinIO
 AWS_S3_ENDPOINT_URL = os.environ.get('S3_ENDPOINT_URL')
+
+# External endpoint for presigned URLs (what the browser will use)
+AWS_S3_EXTERNAL_ENDPOINT = os.environ.get('S3_EXTERNAL_ENDPOINT', 'http://localhost:9000')
+
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')

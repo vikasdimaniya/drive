@@ -17,10 +17,18 @@ from .forms import SignupForm
 from django.utils import timezone
 import logging
 
-# Initializing MinIO client
+# Initializing MinIO client for internal operations
 s3_client = boto3.client(
     's3',
     endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+)
+
+# Initializing MinIO client for generating presigned URLs (using external endpoint)
+s3_external_client = boto3.client(
+    's3',
+    endpoint_url=getattr(settings, 'AWS_S3_EXTERNAL_ENDPOINT', settings.AWS_S3_ENDPOINT_URL),
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
 )
@@ -129,7 +137,8 @@ def get_part_presigned_url(request):
     if not object_key or not upload_id:
         return JsonResponse({"error": "Missing object key or upload ID"}, status=400)
 
-    presigned_url = s3_client.generate_presigned_url(
+    # Use the external client for presigned URLs
+    presigned_url = s3_external_client.generate_presigned_url(
         'upload_part',
         Params={
             'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
@@ -256,8 +265,8 @@ def get_presigned_url(request):
     if not file_key.startswith(f"{user_id}/"):
         return JsonResponse({"error": "Unauthorized access"}, status=403)
 
-    # Generate pre-signed URL
-    presigned_url = s3_client.generate_presigned_url(
+    # Use the external client for presigned URLs
+    presigned_url = s3_external_client.generate_presigned_url(
         "get_object",
         Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": file_key},
         ExpiresIn=3600,  # 1-hour expiration
@@ -486,8 +495,8 @@ def access_shared_file(request, token):
         # Get the file metadata
         file_metadata = shared_link.file
         
-        # Generate a pre-signed URL for the file
-        presigned_url = s3_client.generate_presigned_url(
+        # Generate a pre-signed URL for the file using the external client
+        presigned_url = s3_external_client.generate_presigned_url(
             "get_object",
             Params={
                 "Bucket": settings.AWS_STORAGE_BUCKET_NAME, 
