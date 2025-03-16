@@ -23,6 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Change to the directory containing manage.py
+WORKDIR /app/myproject
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
@@ -31,4 +34,5 @@ RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Run gunicorn with PORT environment variable
+# The path is relative to the current WORKDIR (/app/myproject)
 CMD gunicorn --bind 0.0.0.0:$PORT myproject.wsgi:application 

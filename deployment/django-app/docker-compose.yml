@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   web:
     build:
@@ -15,7 +17,7 @@ services:
       - DB_PORT=${DB_PORT:-5432}
       - PORT=${PORT:-3000}
     volumes:
-      - ../../myproject/myapp/static:/app/staticfiles
+      - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
 
