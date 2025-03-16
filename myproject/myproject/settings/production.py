@@ -55,4 +55,7 @@ AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 # Static files
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage' 
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+# Make sure static files are served correctly
+STATIC_URL = '/static/' 

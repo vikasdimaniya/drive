@@ -24,7 +24,7 @@ services:
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
       - DOMAIN=${DOMAIN:-localhost}
     volumes:
-      - ../../myproject/myapp/static:/app/myproject/staticfiles
+      - ../../myproject/myapp/static:/app/myproject/myapp/static
     ports:
       - "${PORT1:-3011}:3000"  # Map external port to internal port 3000
     networks:
@@ -55,7 +55,7 @@ services:
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
       - DOMAIN=${DOMAIN:-localhost}
     volumes:
-      - ../../myproject/myapp/static:/app/myproject/staticfiles
+      - ../../myproject/myapp/static:/app/myproject/myapp/static
     ports:
       - "${PORT2:-3012}:3000"  # Map external port to internal port 3000
     networks:

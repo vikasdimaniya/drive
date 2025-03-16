@@ -26,6 +26,9 @@ COPY . .
 # Change to the directory containing manage.py
 WORKDIR /app/myproject
 
+# Create static files directory if it doesn't exist
+RUN mkdir -p /app/myproject/staticfiles
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
