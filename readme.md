@@ -124,3 +124,7 @@ python myproject/manage.py fix_shared_links
 source env/bin/activate
 cd myproject
 python manage.py runserver
+
+
+
+# Run nginx
