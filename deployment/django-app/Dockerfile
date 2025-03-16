@@ -5,7 +5,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_ENV=production \
-    PORT=3011
+    PORT=3000
 
 # Set work directory
 WORKDIR /app

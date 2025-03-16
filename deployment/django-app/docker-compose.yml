@@ -15,7 +15,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-root}
       - DB_HOST=host.docker.internal  # Special Docker DNS name that resolves to the host machine
       - DB_PORT=${DB_PORT:-5432}
-      - PORT=3011
+      - PORT=3000  # Fixed internal port
       # S3/MinIO settings
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
       - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
@@ -26,7 +26,7 @@ services:
     volumes:
       - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
-      - "3011:3011"
+      - "${PORT1:-3011}:3000"  # Map external port to internal port 3000
     networks:
       - minio-network
     extra_hosts:
@@ -46,7 +46,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-root}
       - DB_HOST=host.docker.internal  # Special Docker DNS name that resolves to the host machine
       - DB_PORT=${DB_PORT:-5432}
-      - PORT=3012
+      - PORT=3000  # Fixed internal port
       # S3/MinIO settings
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
       - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
@@ -57,7 +57,7 @@ services:
     volumes:
       - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
-      - "3012:3012"
+      - "${PORT2:-3012}:3000"  # Map external port to internal port 3000
     networks:
       - minio-network
     extra_hosts:
