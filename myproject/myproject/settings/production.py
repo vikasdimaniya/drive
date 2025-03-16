@@ -39,7 +39,7 @@ AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_ADDRESSING_STYLE = "path"
 AWS_S3_CUSTOM_DOMAIN = f"{os.environ.get('DOMAIN')}/s3"  # For nginx routing
-AWS_S3_URL_PROTOCOL = 'https:'
+AWS_S3_URL_PROTOCOL = 'http:'
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Static files
