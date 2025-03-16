@@ -33,5 +33,5 @@ RUN python manage.py collectstatic --noinput
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Run Django development server instead of Gunicorn
-CMD python manage.py runserver 0.0.0.0:$PORT 
+# Run Gunicorn with PORT environment variable
+CMD gunicorn --bind 0.0.0.0:$PORT myproject.wsgi:application 
