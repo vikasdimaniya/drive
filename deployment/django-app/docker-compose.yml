@@ -11,7 +11,7 @@ services:
       - DB_NAME=${DB_NAME:-drive}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-root}
-      - DB_HOST=${DB_HOST:-localhost}
+      - DB_HOST=host.docker.internal  # Special Docker DNS name that resolves to the host machine
       - DB_PORT=${DB_PORT:-5432}
       - PORT=${PORT:-3011}
     volumes:
@@ -20,6 +20,8 @@ services:
       - "${PORT:-3011}:${PORT:-3011}"
     networks:
       - minio-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Required for Linux hosts
 
 volumes:
   static_volume: 
