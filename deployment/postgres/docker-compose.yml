@@ -1,60 +1,16 @@
 services:
-  # ----------------- PostgreSQL Master (Site 1) -----------------
-  postgres-site1:
-    image: citusdata/citus:latest
-    container_name: postgres-site1
+  postgres:
+    image: postgres:latest
+    container_name: my-postgres
     restart: always
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: mydatabase
-      BDR_NODE_NAME: postgres-site1
-      BDR_LOCAL_NODE_ID: 1
-      BDR_REPLICATION_SET: default
-      BDR_INIT_REPLICATION: "true"
-    volumes:
-      - postgres_site1_data:/var/lib/postgresql/data
-    networks:
-      - minio-network
     ports:
       - "5432:5432"
-
-  # ----------------- PostgreSQL Master (Site 2) -----------------
-  postgres-site2:
-    image: citusdata/citus:latest
-    container_name: postgres-site2
-    restart: always
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: mydatabase
-      BDR_NODE_NAME: postgres-site2
-      BDR_LOCAL_NODE_ID: 2
-      BDR_REPLICATION_SET: default
-      BDR_INIT_REPLICATION: "true"
     volumes:
-      - postgres_site2_data:/var/lib/postgresql/data
-    networks:
-      - minio-network
-    ports:
-      - "6432:5432"
-
-  # ----------------- HAProxy for Load Balancing -----------------
-  haproxy:
-    image: haproxy:latest
-    container_name: haproxy-postgres
-    restart: always
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-    ports:
-      - "5433:5433"
-    networks:
-      - minio-network
-
-networks:
-  minio-network:
-    external: true
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-  postgres_site1_data:
-  postgres_site2_data:
+  pgdata:

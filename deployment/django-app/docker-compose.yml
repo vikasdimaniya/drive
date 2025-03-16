@@ -1,5 +1,7 @@
+version: '3.8'
+
 services:
-  web:
+  site1-django:
     build:
       context: ../../  # Path to the root of the Django project
       dockerfile: deployment/django-app/Dockerfile
@@ -13,7 +15,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-root}
       - DB_HOST=host.docker.internal  # Special Docker DNS name that resolves to the host machine
       - DB_PORT=${DB_PORT:-5432}
-      - PORT=${PORT:-3011}
+      - PORT=3011
       # S3/MinIO settings
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
       - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
@@ -24,14 +26,45 @@ services:
     volumes:
       - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
-      - "${PORT:-3011}:${PORT:-3011}"
+      - "3011:3011"
+    networks:
+      - minio-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Required for Linux hosts
+
+  site2-django:
+    build:
+      context: ../../  # Path to the root of the Django project
+      dockerfile: deployment/django-app/Dockerfile
+    restart: always
+    environment:
+      - DJANGO_ENV=production
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - DB_NAME=${DB_NAME:-drive}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-root}
+      - DB_HOST=host.docker.internal  # Special Docker DNS name that resolves to the host machine
+      - DB_PORT=${DB_PORT:-5432}
+      - PORT=3012
+      # S3/MinIO settings
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
+      - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-admin123}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ../../myproject/myapp/static:/app/myproject/staticfiles
+    ports:
+      - "3012:3012"
     networks:
       - minio-network
     extra_hosts:
       - "host.docker.internal:host-gateway"  # Required for Linux hosts
 
 volumes:
-  static_volume: 
+  static_volume:
 
 networks:
   minio-network:
