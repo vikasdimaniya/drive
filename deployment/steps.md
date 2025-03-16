@@ -109,7 +109,7 @@ docker ps | grep nginx
 docker logs nginx-load-balancer --tail=50
 ```
 
-### **4️⃣ Test Django Routing (Expected: Routes to 3000 or 3001)**
+### **4️⃣ Test Django Routing (Expected: Routes to 3011 or 3001)**
 ```sh
 curl -H "X-Real-IP: 8.8.8.8" http://localhost/
 curl -H "X-Real-IP: 5.9.9.9" http://localhost/

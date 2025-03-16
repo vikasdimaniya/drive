@@ -15,11 +15,11 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-root}
       - DB_HOST=${DB_HOST:-localhost}
       - DB_PORT=${DB_PORT:-5432}
-      - PORT=${PORT:-3000}
+      - PORT=${PORT:-3011}
     volumes:
       - ../../myproject/myapp/static:/app/myproject/staticfiles
     ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+      - "${PORT:-3011}:${PORT:-3011}"
 
 volumes:
   static_volume: 

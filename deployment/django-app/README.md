@@ -23,7 +23,7 @@ This directory contains the necessary files to deploy the Django application usi
    DB_USER=your_database_user
    DB_PASSWORD=your_database_password
    DB_HOST=your_database_host
-   PORT=3000  # Change this if you want to use a different port
+   PORT=3011  # Change this if you want to use a different port
    ```
 
 3. Build and start the application:
@@ -31,7 +31,7 @@ This directory contains the necessary files to deploy the Django application usi
    docker-compose up -d
    ```
 
-4. The application will be available at http://localhost:3000 (or whatever port you specified)
+4. The application will be available at http://localhost:3011 (or whatever port you specified)
 
 ## Changing the Port
 
