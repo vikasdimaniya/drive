@@ -89,9 +89,9 @@ DATABASES = {
 INSTALLED_APPS += ['storages']
 
 AWS_S3_ENDPOINT_URL = "http://localhost:9000"  # MinIO URL
-AWS_ACCESS_KEY_ID = "minioadmin"
-AWS_SECRET_ACCESS_KEY = "minioadmin"
-AWS_STORAGE_BUCKET_NAME = "mybucket"  # Create this in MinIO
+AWS_ACCESS_KEY_ID = "admin"
+AWS_SECRET_ACCESS_KEY = "admin123"
+AWS_STORAGE_BUCKET_NAME = "drive"  # Create this in MinIO
 AWS_S3_ADDRESSING_STYLE = "path"
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
