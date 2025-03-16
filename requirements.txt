@@ -1,4 +1,6 @@
-django
-psycopg2-binary
-boto3
-django-storages
+Django>=5.1.6,<5.2
+psycopg2-binary>=2.9.9,<3.0
+gunicorn>=21.2.0,<22.0
+django-storages>=1.14.2,<1.15
+boto3>=1.34.0,<1.35
+python-dotenv>=1.0.0,<1.1

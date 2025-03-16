@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ../../  # Path to the root of the Django project
+      dockerfile: deployment/django-app/Dockerfile
+    restart: always
+    environment:
+      - DJANGO_ENV=production
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - DB_NAME=${DB_NAME:-drive}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-root}
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - PORT=${PORT:-3000}
+    volumes:
+      - ../../myproject/myapp/static:/app/staticfiles
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+
+volumes:
+  static_volume: 

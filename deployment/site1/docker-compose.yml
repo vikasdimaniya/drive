@@ -1,0 +1,62 @@
+services:
+  minio1:
+    image: quay.io/minio/minio
+    command: server http://172.18.0.5/data http://172.18.0.4/data http://172.18.0.2/data http://172.18.0.3/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - site1_data1:/data
+    networks:
+      - minio-network
+
+  minio2:
+    image: quay.io/minio/minio
+    command: server http://172.18.0.5/data http://172.18.0.4/data http://172.18.0.2/data http://172.18.0.3/data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - site1_data2:/data
+    networks:
+      - minio-network
+
+  minio3:
+    image: quay.io/minio/minio
+    command: server http://172.18.0.5/data http://172.18.0.4/data http://172.18.0.2/data http://172.18.0.3/data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - site1_data3:/data
+    networks:
+      - minio-network
+
+  minio4:
+    image: quay.io/minio/minio
+    command: server http://172.18.0.5/data http://172.18.0.4/data http://172.18.0.2/data http://172.18.0.3/data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - site1_data4:/data
+    networks:
+      - minio-network
+
+networks:
+  minio-network:
+    external: true
+
+
+volumes:
+  site1_data1:
+    name: site1_data1
+  site1_data2:
+    name: site1_data2
+  site1_data3:
+    name: site1_data3
+  site1_data4:
+    name: site1_data4
