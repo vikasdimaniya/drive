@@ -13,8 +13,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'drive',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
+        'USER': 'admin',
+        'PASSWORD': 'admin123',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -24,6 +24,6 @@ DATABASES = {
 AWS_S3_ENDPOINT_URL = "http://localhost:9000"
 AWS_ACCESS_KEY_ID = "admin"
 AWS_SECRET_ACCESS_KEY = "admin123"
-AWS_STORAGE_BUCKET_NAME = "mybucket"
+AWS_STORAGE_BUCKET_NAME = "drive"
 AWS_S3_ADDRESSING_STYLE = "path"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage" 
