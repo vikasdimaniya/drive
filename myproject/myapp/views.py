@@ -190,16 +190,33 @@ def complete_multipart_upload(request):
             logger.error(f"Failed to get file metadata: {str(e)}", exc_info=True)
             return JsonResponse({"error": f"Failed to get file metadata: {str(e)}"}, status=500)
 
-        # Store metadata in the database
+        # Store metadata in the database - check if file already exists
         try:
-            FileMetadata.objects.create(
-                user=request.user,
-                file_name=file_name.split("/")[-1],
-                file_path=f"{request.user.id}/{file_name.split('/')[-1]}",
-                file_size=file_size,
-                file_type=file_type,
+            # Extract the actual filename from the path
+            actual_filename = file_name.split("/")[-1]
+            file_path = f"{request.user.id}/{actual_filename}"
+            
+            # Check if file already exists
+            existing_file, created = FileMetadata.objects.get_or_create(
+                file_path=file_path,
+                defaults={
+                    "user": request.user,
+                    "file_name": actual_filename,
+                    "file_size": file_size,
+                    "file_type": file_type,
+                }
             )
-            logger.info(f"File metadata stored successfully for {file_name}")
+            
+            if not created:
+                # Update the existing file metadata
+                existing_file.file_size = file_size
+                existing_file.file_type = file_type
+                existing_file.last_modified = timezone.now()
+                existing_file.save()
+                logger.info(f"Updated existing file metadata for {file_name}")
+            else:
+                logger.info(f"Created new file metadata for {file_name}")
+                
         except Exception as e:
             logger.error(f"Metadata storage failed: {str(e)}", exc_info=True)
             return JsonResponse({"error": f"Metadata storage failed: {str(e)}"}, status=500)
