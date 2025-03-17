@@ -18,11 +18,11 @@ services:
       - PORT=3000  # Fixed internal port
       # S3/MinIO settings
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
-      - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
+      - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-https://drive.aqlio.com/s3}  # External URL for browser
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-admin123}
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DOMAIN:-drive.aqlio.com}
     volumes:
       - ../../myproject/myapp/static:/app/myproject/myapp/static
     ports:
@@ -49,11 +49,11 @@ services:
       - PORT=3000  # Fixed internal port
       # S3/MinIO settings
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://host.docker.internal:9000}  # Internal URL for Django
-      - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-http://localhost:9000}  # External URL for browser
+      - S3_EXTERNAL_ENDPOINT=${S3_EXTERNAL_ENDPOINT:-https://drive.aqlio.com/s3}  # External URL for browser
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-admin123}
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-drive}
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DOMAIN:-drive.aqlio.com}
     volumes:
       - ../../myproject/myapp/static:/app/myproject/myapp/static
     ports:

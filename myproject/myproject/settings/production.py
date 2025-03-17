@@ -87,14 +87,14 @@ LOGGING = {
 AWS_S3_ENDPOINT_URL = os.environ.get('S3_ENDPOINT_URL')
 
 # External endpoint for presigned URLs (what the browser will use)
-AWS_S3_EXTERNAL_ENDPOINT = os.environ.get('S3_EXTERNAL_ENDPOINT', 'http://localhost:9000')
+AWS_S3_EXTERNAL_ENDPOINT = os.environ.get('S3_EXTERNAL_ENDPOINT', 'https://drive.aqlio.com/s3')
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_ADDRESSING_STYLE = "path"
-AWS_S3_CUSTOM_DOMAIN = f"{os.environ.get('DOMAIN')}/s3"  # For nginx routing
-AWS_S3_URL_PROTOCOL = 'http:'
+AWS_S3_CUSTOM_DOMAIN = f"{os.environ.get('DOMAIN', 'drive.aqlio.com')}/s3"  # For nginx routing
+AWS_S3_URL_PROTOCOL = 'https:'
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # CORS settings for S3
