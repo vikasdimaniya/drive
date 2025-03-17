@@ -1,5 +1,7 @@
 import boto3
 import json
+import logging
+import os
 import uuid
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse, Http404
@@ -15,7 +17,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
 from django.utils import timezone
-import logging
 
 # Initializing MinIO client for internal operations
 s3_client = boto3.client(
@@ -153,38 +154,66 @@ def get_part_presigned_url(request):
 @login_required
 def complete_multipart_upload(request):
     """Finalize multipart upload"""
-    data = json.loads(request.body)
-    file_name = data["object_key"]
-    upload_id = data["upload_id"]
-    parts = data["parts"]
-
-    response = s3_client.complete_multipart_upload(
-        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-        Key=file_name,
-        UploadId=upload_id,
-        MultipartUpload={"Parts": parts},
-    )
-
-    # Fetch file metadata from S3
-    head_object = s3_client.head_object(
-        Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file_name
-    )
-    file_size = head_object["ContentLength"]
-    file_type = head_object["ContentType"]
-
-    # Store metadata in the database
+    logger = logging.getLogger('myapp')
+    
     try:
-        FileMetadata.objects.create(
-            user=request.user,
-            file_name=file_name.split("/")[-1],
-            file_path=f"{request.user.id}/{file_name.split('/')[-1]}",
-            file_size=file_size,
-            file_type=file_type,
-        )
-    except Exception as e:
-        return JsonResponse({"error": f"Metadata storage failed: {str(e)}"}, status=500)
+        data = json.loads(request.body)
+        logger.debug(f"Received multipart complete request: {data}")
+        
+        file_name = data["object_key"]
+        upload_id = data["upload_id"]
+        parts = data["parts"]
+        
+        logger.info(f"Completing multipart upload for file: {file_name}, upload_id: {upload_id}, parts count: {len(parts)}")
+        
+        try:
+            response = s3_client.complete_multipart_upload(
+                Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                Key=file_name,
+                UploadId=upload_id,
+                MultipartUpload={"Parts": parts},
+            )
+            logger.info(f"S3 complete_multipart_upload response: {response}")
+        except Exception as e:
+            logger.error(f"S3 complete_multipart_upload failed: {str(e)}", exc_info=True)
+            return JsonResponse({"error": f"S3 multipart completion failed: {str(e)}"}, status=500)
 
-    return JsonResponse({"message": "Upload completed", "location": response["Location"]})
+        # Fetch file metadata from S3
+        try:
+            head_object = s3_client.head_object(
+                Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file_name
+            )
+            file_size = head_object["ContentLength"]
+            file_type = head_object["ContentType"]
+            logger.info(f"Retrieved file metadata: size={file_size}, type={file_type}")
+        except Exception as e:
+            logger.error(f"Failed to get file metadata: {str(e)}", exc_info=True)
+            return JsonResponse({"error": f"Failed to get file metadata: {str(e)}"}, status=500)
+
+        # Store metadata in the database
+        try:
+            FileMetadata.objects.create(
+                user=request.user,
+                file_name=file_name.split("/")[-1],
+                file_path=f"{request.user.id}/{file_name.split('/')[-1]}",
+                file_size=file_size,
+                file_type=file_type,
+            )
+            logger.info(f"File metadata stored successfully for {file_name}")
+        except Exception as e:
+            logger.error(f"Metadata storage failed: {str(e)}", exc_info=True)
+            return JsonResponse({"error": f"Metadata storage failed: {str(e)}"}, status=500)
+
+        return JsonResponse({"message": "Upload completed", "location": response["Location"]})
+    except KeyError as e:
+        logger.error(f"Missing required field in request: {str(e)}", exc_info=True)
+        return JsonResponse({"error": f"Missing required field: {str(e)}"}, status=400)
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in request body: {str(e)}", exc_info=True)
+        return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in complete_multipart_upload: {str(e)}", exc_info=True)
+        return JsonResponse({"error": f"Unexpected error: {str(e)}"}, status=500)
 
 @login_required
 def list_user_files(request):
