@@ -9,7 +9,7 @@ services:
     environment:
       - DJANGO_ENV=production
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,drive.aqlio.com}
       - DB_NAME=${DB_NAME:-drive}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-root}
@@ -40,7 +40,7 @@ services:
     environment:
       - DJANGO_ENV=production
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,drive.aqlio.com}
       - DB_NAME=${DB_NAME:-drive}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-root}

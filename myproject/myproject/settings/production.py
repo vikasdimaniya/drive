@@ -8,7 +8,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 DEBUG = True  # Temporarily enabled for debugging
 
 # Add drive.aqlio.com to allowed hosts
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'drive.aqlio.com').split(',')
+ALLOWED_HOSTS = ['drive.aqlio.com', 'localhost', '127.0.0.1']
+# Add any additional hosts from environment variable
+if os.environ.get('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS.extend(os.environ.get('ALLOWED_HOSTS').split(','))
 
 # Database
 DATABASES = {

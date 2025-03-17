@@ -89,4 +89,9 @@ LOGIN_URL = "/login/"
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # 1 day
-SESSION_SAVE_EVERY_REQUEST = True 
+SESSION_SAVE_EVERY_REQUEST = True
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = ['drive.aqlio.com', 'localhost', '127.0.0.1'] 
