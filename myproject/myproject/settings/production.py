@@ -130,4 +130,7 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-] 
+]
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = ['https://drive.aqlio.com', 'http://drive.aqlio.com'] 

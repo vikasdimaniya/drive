@@ -94,4 +94,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['drive.aqlio.com', 'localhost', '127.0.0.1'] 
+ALLOWED_HOSTS = ['drive.aqlio.com', 'localhost', '127.0.0.1']
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = ['https://drive.aqlio.com', 'http://drive.aqlio.com'] 
