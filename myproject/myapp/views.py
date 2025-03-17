@@ -117,8 +117,8 @@ def create_multipart_upload(request):
 
     user_id = request.user.id
 
-    # Store the file under the user's folder
-    object_key = f"/{user_id}/{file_name}"
+    # Store the file under the user's folder - remove leading slash to prevent double slash
+    object_key = f"{user_id}/{file_name}"
 
     response = s3_client.create_multipart_upload(
         Bucket=settings.AWS_STORAGE_BUCKET_NAME,
