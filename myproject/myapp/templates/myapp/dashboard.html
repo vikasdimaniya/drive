@@ -24,6 +24,9 @@
         <h1><i class="fas fa-hdd"></i> MyDrive</h1>
         <div class="user-info">
             <span>Welcome, {{ user.first_name|default:user.username }}!</span>
+            {% if user.is_staff %}
+            <a href="{% url 'monitoring' %}" class="monitor-btn"><i class="fas fa-chart-line"></i> Monitoring</a>
+            {% endif %}
             <form action="{% url 'logout' %}" method="post" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>

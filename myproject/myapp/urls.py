@@ -5,7 +5,7 @@ from .views import (
     list_user_files, get_presigned_url, delete_user_file, search_user_files, signup, home, 
     create_shared_link, access_shared_file, list_shared_with_me, list_shared_by_me, revoke_access,
     refresh_shared_files, remove_shared_with_me, list_trash, move_to_trash, restore_from_trash, empty_trash,
-    debug_shared_link
+    debug_shared_link, monitoring_dashboard, get_minio_info, get_folder_count, check_mc_installed
 )
 
 urlpatterns = [
@@ -19,6 +19,12 @@ urlpatterns = [
 
     # Dashboard
     path('dashboard/', dashboard, name='dashboard'),
+    
+    # Monitoring Dashboard (admin only)
+    path('monitoring/', monitoring_dashboard, name='monitoring'),
+    path('api/monitoring/site/<int:site>/', get_minio_info, name='get-minio-info'),
+    path('api/monitoring/folders/<int:site>/', get_folder_count, name='get-folder-count'),
+    path('api/monitoring/check-mc/', check_mc_installed, name='check-mc-installed'),
 
     # Upload files
     path("api/upload/multipart/start/", create_multipart_upload, name="start-multipart"),

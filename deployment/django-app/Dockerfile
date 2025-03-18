@@ -11,10 +11,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    curl \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Download MinIO client
+RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc && \
+    chmod +x /usr/local/bin/mc
 
 # Copy requirements first for better caching
 COPY requirements.txt .

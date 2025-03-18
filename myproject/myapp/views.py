@@ -17,6 +17,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
 from django.utils import timezone
+import subprocess
+import re
+from django.contrib.admin.views.decorators import staff_member_required
+import threading
+import tempfile
 
 # Initializing MinIO client for internal operations
 s3_client = boto3.client(
@@ -887,5 +892,176 @@ def debug_shared_link(request, token):
     except Exception as e:
         logger.error(f"Error debugging shared link: {str(e)}")
         return JsonResponse({'error': 'Failed to debug shared link'}, status=500)
+
+@staff_member_required
+def monitoring_dashboard(request):
+    """Monitoring dashboard for admin users to view MinIO server information"""
+    return render(request, 'myapp/monitoring.html')
+
+@staff_member_required
+def get_minio_info(request, site):
+    """API endpoint to get MinIO server information for a specific site"""
+    site_name = f"site{site}"
+    
+    if not re.match(r'^site[12]$', site_name):
+        return JsonResponse({"error": "Invalid site name"}, status=400)
+    
+    try:
+        # Create a temp directory for mc config
+        temp_dir = tempfile.mkdtemp()
+        os.environ["MC_CONFIG_DIR"] = temp_dir
+        
+        # Set alias for the site
+        if site_name == "site1":
+            endpoint = os.environ.get('SITE1_MINIO_ENDPOINT', 'site1-minio1-1:9000')
+        else:
+            endpoint = os.environ.get('SITE2_MINIO_ENDPOINT', 'site2-minio1-1:9000')
+            
+        access_key = os.environ.get('AWS_ACCESS_KEY_ID', 'admin')
+        secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'admin123')
+        
+        # Create alias
+        subprocess.run(
+            ["mc", "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
+            check=True,
+            capture_output=True
+        )
+        
+        # Get server info
+        result = subprocess.run(
+            ["mc", "admin", "info", "--json", site_name],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        # Get user folders info
+        ls_result = subprocess.run(
+            ["mc", "ls", f"{site_name}/drive", "--json"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        # Parse the output to extract folder count
+        folder_count = 0
+        for line in ls_result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    entry = json.loads(line)
+                    if entry.get('type') == 'folder':
+                        folder_count += 1
+                except:
+                    pass
+        
+        # Clean up temp dir
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        # Parse server info
+        info = json.loads(result.stdout)
+        info['user_count'] = folder_count
+        
+        return JsonResponse(info)
+    except subprocess.CalledProcessError as e:
+        error_message = f"Error executing MinIO command: {e.stderr}"
+        return JsonResponse({"error": error_message}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+def get_folder_count(request, site):
+    """API endpoint to get count of user folders in the drive bucket"""
+    site_name = f"site{site}"
+    
+    if not re.match(r'^site[12]$', site_name):
+        return JsonResponse({"error": "Invalid site name"}, status=400)
+    
+    try:
+        # Create a temp directory for mc config
+        temp_dir = tempfile.mkdtemp()
+        os.environ["MC_CONFIG_DIR"] = temp_dir
+        
+        # Set alias for the site
+        if site_name == "site1":
+            endpoint = os.environ.get('SITE1_MINIO_ENDPOINT', 'site1-minio1-1:9000')
+        else:
+            endpoint = os.environ.get('SITE2_MINIO_ENDPOINT', 'site2-minio1-1:9000')
+            
+        access_key = os.environ.get('AWS_ACCESS_KEY_ID', 'admin')
+        secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'admin123')
+        
+        # Create alias
+        subprocess.run(
+            ["mc", "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
+            check=True,
+            capture_output=True
+        )
+        
+        # Get folders in drive bucket
+        result = subprocess.run(
+            ["mc", "ls", f"{site_name}/drive", "--json"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        # Parse the output to extract folder count
+        folders = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                try:
+                    entry = json.loads(line)
+                    if entry.get('type') == 'folder':
+                        folders.append(entry)
+                except:
+                    pass
+        
+        # Clean up temp dir
+        import shutil
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        return JsonResponse({"count": len(folders), "folders": folders})
+    except subprocess.CalledProcessError as e:
+        error_message = f"Error executing MinIO command: {e.stderr}"
+        return JsonResponse({"error": error_message}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+def check_mc_installed(request):
+    """Check if MinIO client (mc) is installed and download if needed"""
+    try:
+        # Check if mc is installed
+        subprocess.run(["mc", "--version"], check=True, capture_output=True)
+        return JsonResponse({"status": "installed"})
+    except:
+        try:
+            # Download mc for the appropriate platform
+            platform = os.name
+            if platform == 'posix':
+                # Linux or macOS
+                if os.uname().sysname == 'Darwin':
+                    # macOS
+                    url = "https://dl.min.io/client/mc/release/darwin-amd64/mc"
+                else:
+                    # Linux
+                    url = "https://dl.min.io/client/mc/release/linux-amd64/mc"
+            else:
+                # Windows
+                url = "https://dl.min.io/client/mc/release/windows-amd64/mc.exe"
+            
+            # Download mc
+            mc_path = os.path.join(os.getcwd(), "mc")
+            if platform != 'posix':
+                mc_path += ".exe"
+                
+            subprocess.run(["curl", "-o", mc_path, url], check=True)
+            
+            # Make executable
+            if platform == 'posix':
+                subprocess.run(["chmod", "+x", mc_path], check=True)
+                
+            return JsonResponse({"status": "installed", "path": mc_path})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
 
 

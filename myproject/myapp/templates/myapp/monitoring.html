@@ -1,0 +1,519 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MyDrive Monitoring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <style>
+        /* Monitoring specific styles */
+        .monitor-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .site-cards {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .site-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 45%;
+            min-width: 400px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            border: 2px solid transparent;
+        }
+        
+        .site-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .site-card.active {
+            border-color: #0078D7;
+        }
+        
+        .site-header {
+            background-color: #0078D7;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        
+        .site-body {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 48px;
+            font-weight: 500;
+            color: #0078D7;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .server-info {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-header {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-card h3 {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .info-card .value {
+            font-size: 24px;
+            font-weight: 500;
+            color: #0078D7;
+        }
+        
+        .server-list {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .server-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .server-table th, .server-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .server-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .server-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .status-online {
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        .status-offline {
+            color: #dc3545;
+            font-weight: 500;
+        }
+        
+        .refresh-btn {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .refresh-btn i {
+            margin-right: 6px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #0063b1;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .folder-list {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <h1><i class="fas fa-hdd"></i> MyDrive</h1>
+        <div class="user-info">
+            <span>Welcome, {{ user.first_name|default:user.username }}!</span>
+            <a href="{% url 'dashboard' %}" class="monitor-btn" style="background-color: #555;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="monitor-container">
+        <h1>MinIO Server Monitoring</h1>
+        <p>Select a site to view detailed information about the MinIO servers.</p>
+        
+        <div class="site-cards">
+            <div class="site-card" id="site1-card" onclick="selectSite(1)" data-site="1">
+                <div class="loading-overlay" id="site1-loading" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+                <div class="site-header">
+                    <i class="fas fa-server"></i> Site 1
+                </div>
+                <div class="site-body">
+                    <div class="stat-value" id="site1-nodes">-</div>
+                    <div class="stat-label">Nodes</div>
+                    <div class="stat-value" id="site1-users">-</div>
+                    <div class="stat-label">Users</div>
+                </div>
+            </div>
+            
+            <div class="site-card" id="site2-card" onclick="selectSite(2)" data-site="2">
+                <div class="loading-overlay" id="site2-loading" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+                <div class="site-header">
+                    <i class="fas fa-server"></i> Site 2
+                </div>
+                <div class="site-body">
+                    <div class="stat-value" id="site2-nodes">-</div>
+                    <div class="stat-label">Nodes</div>
+                    <div class="stat-value" id="site2-users">-</div>
+                    <div class="stat-label">Users</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="site-details" style="display: none;">
+            <div class="server-info">
+                <div class="info-header">
+                    <span>Server Information</span>
+                    <button id="refresh-btn" class="refresh-btn" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>Buckets</h3>
+                        <div id="bucket-count" class="value">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Objects</h3>
+                        <div id="object-count" class="value">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Usage</h3>
+                        <div id="usage-size" class="value">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Online Disks</h3>
+                        <div id="online-disks" class="value">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Storage Type</h3>
+                        <div id="storage-type" class="value">-</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Standard Parity</h3>
+                        <div id="standard-parity" class="value">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="server-list">
+                <div class="info-header">
+                    <span>Server List</span>
+                </div>
+                <table class="server-table">
+                    <thead>
+                        <tr>
+                            <th>Endpoint</th>
+                            <th>State</th>
+                            <th>Uptime</th>
+                            <th>Version</th>
+                            <th>Drive Size</th>
+                        </tr>
+                    </thead>
+                    <tbody id="server-table-body">
+                        <!-- Server rows will be added here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="folder-list">
+                <div class="info-header">
+                    <span>User Folders</span>
+                </div>
+                <div>Total User Folders: <span id="folder-count">-</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let currentSite = null;
+        let autoRefresh = null;
+        const siteData = {
+            1: null,
+            2: null
+        };
+        
+        // Check if MinIO client is installed
+        async function checkMCInstall() {
+            try {
+                const response = await fetch('/api/monitoring/check-mc/');
+                const data = await response.json();
+                if (data.error) {
+                    alert(`Error checking MinIO client: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error checking MinIO client:', error);
+            }
+        }
+        
+        // Initialize site cards
+        async function initSiteCards() {
+            await loadSiteInfo(1);
+            await loadSiteInfo(2);
+        }
+        
+        // Format file size
+        function formatSize(size) {
+            if (size === 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+            const i = Math.floor(Math.log(size) / Math.log(1024));
+            return (size / Math.pow(1024, i)).toFixed(2) + ' ' + units[i];
+        }
+        
+        // Format uptime
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) {
+                return `${days}d ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else {
+                return `${minutes}m`;
+            }
+        }
+        
+        // Load site summary info
+        async function loadSiteInfo(site) {
+            const loadingEl = document.getElementById(`site${site}-loading`);
+            loadingEl.style.display = 'flex';
+            
+            try {
+                const response = await fetch(`/api/monitoring/site/${site}/`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById(`site${site}-nodes`).textContent = 'Error';
+                    document.getElementById(`site${site}-users`).textContent = 'Error';
+                    console.error(`Error loading site ${site} info:`, data.error);
+                    return;
+                }
+                
+                siteData[site] = data;
+                
+                if (data.info && data.info.servers) {
+                    document.getElementById(`site${site}-nodes`).textContent = data.info.servers.length;
+                }
+                
+                if (data.user_count !== undefined) {
+                    document.getElementById(`site${site}-users`).textContent = data.user_count;
+                }
+                
+                if (currentSite === site) {
+                    updateSiteDetails(site);
+                }
+            } catch (error) {
+                console.error(`Error loading site ${site} info:`, error);
+                document.getElementById(`site${site}-nodes`).textContent = 'Error';
+                document.getElementById(`site${site}-users`).textContent = 'Error';
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+        
+        // Select a site
+        function selectSite(site) {
+            // Clear previous site selection
+            document.querySelectorAll('.site-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Set current site
+            currentSite = site;
+            document.getElementById(`site${site}-card`).classList.add('active');
+            document.getElementById('site-details').style.display = 'block';
+            
+            // Update site details
+            updateSiteDetails(site);
+            
+            // Set up auto-refresh
+            if (autoRefresh) {
+                clearInterval(autoRefresh);
+            }
+            
+            autoRefresh = setInterval(() => {
+                refreshData();
+            }, 5000);
+        }
+        
+        // Refresh data
+        async function refreshData() {
+            if (currentSite) {
+                await loadSiteInfo(currentSite);
+            }
+        }
+        
+        // Update site details
+        function updateSiteDetails(site) {
+            const data = siteData[site];
+            if (!data || !data.info) return;
+            
+            const info = data.info;
+            
+            // Update info cards
+            document.getElementById('bucket-count').textContent = info.buckets?.count || '-';
+            document.getElementById('object-count').textContent = info.objects?.count || '-';
+            document.getElementById('usage-size').textContent = info.usage?.size ? formatSize(info.usage.size) : '-';
+            document.getElementById('online-disks').textContent = info.backend?.onlineDisks || '-';
+            document.getElementById('storage-type').textContent = info.backend?.backendType || '-';
+            document.getElementById('standard-parity').textContent = info.backend?.standardSCParity || '-';
+            document.getElementById('folder-count').textContent = data.user_count || '-';
+            
+            // Update server table
+            const tableBody = document.getElementById('server-table-body');
+            tableBody.innerHTML = '';
+            
+            if (info.servers && info.servers.length > 0) {
+                info.servers.forEach(server => {
+                    const row = document.createElement('tr');
+                    
+                    // Endpoint
+                    const endpointCell = document.createElement('td');
+                    endpointCell.textContent = server.endpoint;
+                    row.appendChild(endpointCell);
+                    
+                    // State
+                    const stateCell = document.createElement('td');
+                    const stateSpan = document.createElement('span');
+                    stateSpan.textContent = server.state;
+                    stateSpan.className = server.state === 'online' ? 'status-online' : 'status-offline';
+                    stateCell.appendChild(stateSpan);
+                    row.appendChild(stateCell);
+                    
+                    // Uptime
+                    const uptimeCell = document.createElement('td');
+                    uptimeCell.textContent = formatUptime(server.uptime);
+                    row.appendChild(uptimeCell);
+                    
+                    // Version
+                    const versionCell = document.createElement('td');
+                    versionCell.textContent = server.version;
+                    row.appendChild(versionCell);
+                    
+                    // Drive Size
+                    const driveCell = document.createElement('td');
+                    if (server.drives && server.drives.length > 0) {
+                        const drive = server.drives[0];
+                        driveCell.textContent = `${formatSize(drive.usedspace)} / ${formatSize(drive.totalspace)}`;
+                    } else {
+                        driveCell.textContent = '-';
+                    }
+                    row.appendChild(driveCell);
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkMCInstall();
+            initSiteCards();
+        });
+    </script>
+</body>
+</html> 
