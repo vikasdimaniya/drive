@@ -390,6 +390,12 @@
                     document.getElementById(`site${site}-nodes`).textContent = 'Error';
                     document.getElementById(`site${site}-users`).textContent = 'Error';
                     console.error(`Error loading site ${site} info:`, data.error);
+                    
+                    // Show error message in node value
+                    const errorMsg = data.error.includes("MinIO") ? "No connection" : "Error";
+                    document.getElementById(`site${site}-nodes`).textContent = errorMsg;
+                    document.getElementById(`site${site}-users`).textContent = errorMsg;
+                    
                     return;
                 }
                 
@@ -510,9 +516,24 @@
         }
         
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            checkMCInstall();
-            initSiteCards();
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // First check if mc is installed
+                const mcResponse = await fetch('/api/monitoring/check-mc/');
+                const mcData = await mcResponse.json();
+                
+                if (mcData.error) {
+                    console.error('Error checking MinIO client:', mcData.error);
+                    alert('Error checking MinIO client. Check console for details.');
+                } else {
+                    console.log('MinIO client status:', mcData.status);
+                    // Only proceed to load site info if mc is installed
+                    await initSiteCards();
+                }
+            } catch (error) {
+                console.error('Error initializing monitoring dashboard:', error);
+                alert('Error initializing monitoring dashboard. Check console for details.');
+            }
         });
     </script>
 </body>

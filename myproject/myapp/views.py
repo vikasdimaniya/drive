@@ -3,6 +3,9 @@ import json
 import logging
 import os
 import uuid
+import re
+import traceback
+import platform
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
@@ -10,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db.models import Q
@@ -18,10 +22,9 @@ from myapp.models import FileMetadata, SharedLink
 from .forms import SignupForm
 from django.utils import timezone
 import subprocess
-import re
-from django.contrib.admin.views.decorators import staff_member_required
 import threading
 import tempfile
+import traceback
 
 # Initializing MinIO client for internal operations
 s3_client = boto3.client(
@@ -896,19 +899,23 @@ def debug_shared_link(request, token):
 @staff_member_required
 def monitoring_dashboard(request):
     """Monitoring dashboard for admin users to view MinIO server information"""
+    logger.info("Accessing monitoring dashboard")
     return render(request, 'myapp/monitoring.html')
 
 @staff_member_required
 def get_minio_info(request, site):
     """API endpoint to get MinIO server information for a specific site"""
+    logger.info(f"Getting MinIO info for site {site}")
     site_name = f"site{site}"
     
     if not re.match(r'^site[12]$', site_name):
+        logger.error(f"Invalid site name: {site_name}")
         return JsonResponse({"error": "Invalid site name"}, status=400)
     
     try:
         # Create a temp directory for mc config
         temp_dir = tempfile.mkdtemp()
+        logger.debug(f"Created temp directory for mc config: {temp_dir}")
         os.environ["MC_CONFIG_DIR"] = temp_dir
         
         # Set alias for the site
@@ -920,61 +927,144 @@ def get_minio_info(request, site):
         access_key = os.environ.get('AWS_ACCESS_KEY_ID', 'admin')
         secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'admin123')
         
+        logger.debug(f"Setting up mc alias for {site_name} with endpoint {endpoint}")
+        
+        # Check if mc exists
+        mc_path = "mc"
+        if os.name == 'nt':  # Windows
+            mc_path = os.path.join(os.getcwd(), "mc.exe")
+        elif os.path.exists(os.path.join(os.getcwd(), "mc")):
+            mc_path = os.path.join(os.getcwd(), "mc")
+            
+        logger.debug(f"Using mc path: {mc_path}")
+            
         # Create alias
-        subprocess.run(
-            ["mc", "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
-            check=True,
-            capture_output=True
-        )
+        try:
+            alias_result = subprocess.run(
+                [mc_path, "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            logger.debug(f"Alias result: {alias_result.stdout}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error setting alias: {e.stderr}")
+            return JsonResponse({
+                "error": f"Error setting MinIO alias: {e.stderr}",
+                "command": f"mc alias set {site_name} http://{endpoint} [access_key] [secret_key]"
+            }, status=500)
+        
+        # For development, we'll simulate the response if we can't connect to the MinIO server
+        if settings.DEBUG:
+            try:
+                # First try to get actual data
+                info_result = subprocess.run(
+                    [mc_path, "admin", "info", "--json", site_name],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=3  # Add a timeout for development
+                )
+                info = json.loads(info_result.stdout)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
+                # If it fails, return mock data
+                logger.warning(f"Returning mock data for {site_name} in development mode")
+                return JsonResponse({
+                    "info": {
+                        "servers": [
+                            {"endpoint": f"{site_name}-minio1-1:9000", "state": "online", "uptime": 3600, "version": "RELEASE.2024-01-16T16-07-38Z", "drives": [{"usedspace": 1000000, "totalspace": 10000000}]},
+                            {"endpoint": f"{site_name}-minio1-2:9000", "state": "online", "uptime": 3600, "version": "RELEASE.2024-01-16T16-07-38Z", "drives": [{"usedspace": 2000000, "totalspace": 10000000}]}
+                        ],
+                        "buckets": {"count": 5},
+                        "objects": {"count": 1024},
+                        "usage": {"size": 3000000},
+                        "backend": {"backendType": "Erasure", "onlineDisks": 4, "standardSCParity": 2}
+                    },
+                    "user_count": 42
+                })
         
         # Get server info
-        result = subprocess.run(
-            ["mc", "admin", "info", "--json", site_name],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        try:
+            info_result = subprocess.run(
+                [mc_path, "admin", "info", "--json", site_name],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            logger.debug(f"Info command output: {info_result.stdout}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error getting server info: {e.stderr}")
+            return JsonResponse({
+                "error": f"Error getting MinIO server info: {e.stderr}",
+                "command": f"mc admin info --json {site_name}"
+            }, status=500)
         
         # Get user folders info
-        ls_result = subprocess.run(
-            ["mc", "ls", f"{site_name}/drive", "--json"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        try:
+            ls_result = subprocess.run(
+                [mc_path, "ls", f"{site_name}/drive", "--json"],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            logger.debug(f"LS command executed successfully")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error listing folders: {e.stderr}")
+            # Continue with partial data, just set folder count to 0
+            ls_result = None
         
         # Parse the output to extract folder count
         folder_count = 0
-        for line in ls_result.stdout.strip().split('\n'):
-            if line:
-                try:
-                    entry = json.loads(line)
-                    if entry.get('type') == 'folder':
-                        folder_count += 1
-                except:
-                    pass
+        if ls_result:
+            for line in ls_result.stdout.strip().split('\n'):
+                if line:
+                    try:
+                        entry = json.loads(line)
+                        if entry.get('type') == 'folder':
+                            folder_count += 1
+                    except json.JSONDecodeError:
+                        pass
         
         # Clean up temp dir
         import shutil
         shutil.rmtree(temp_dir, ignore_errors=True)
         
         # Parse server info
-        info = json.loads(result.stdout)
-        info['user_count'] = folder_count
+        try:
+            info = json.loads(info_result.stdout)
+            info['user_count'] = folder_count
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing server info JSON: {e}")
+            return JsonResponse({"error": f"Error parsing server info: {str(e)}"}, status=500)
         
         return JsonResponse(info)
-    except subprocess.CalledProcessError as e:
-        error_message = f"Error executing MinIO command: {e.stderr}"
-        return JsonResponse({"error": error_message}, status=500)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception(f"Unexpected error in get_minio_info: {str(e)}")
+        return JsonResponse({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }, status=500)
 
+@staff_member_required
 def get_folder_count(request, site):
     """API endpoint to get count of user folders in the drive bucket"""
+    logger.info(f"Getting folder count for site {site}")
     site_name = f"site{site}"
     
     if not re.match(r'^site[12]$', site_name):
         return JsonResponse({"error": "Invalid site name"}, status=400)
+    
+    # For development, return mock data if DEBUG is True
+    if settings.DEBUG:
+        logger.warning(f"Returning mock folder count data for {site_name} in development mode")
+        return JsonResponse({
+            "count": 42,
+            "folders": [
+                {"name": "user1", "size": 5242880, "type": "folder"},
+                {"name": "user2", "size": 3145728, "type": "folder"},
+                {"name": "user3", "size": 10485760, "type": "folder"}
+            ]
+        })
     
     try:
         # Create a temp directory for mc config
@@ -990,16 +1080,23 @@ def get_folder_count(request, site):
         access_key = os.environ.get('AWS_ACCESS_KEY_ID', 'admin')
         secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'admin123')
         
+        # Check if mc exists
+        mc_path = "mc"
+        if os.name == 'nt':  # Windows
+            mc_path = os.path.join(os.getcwd(), "mc.exe")
+        elif os.path.exists(os.path.join(os.getcwd(), "mc")):
+            mc_path = os.path.join(os.getcwd(), "mc")
+        
         # Create alias
         subprocess.run(
-            ["mc", "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
+            [mc_path, "alias", "set", site_name, f"http://{endpoint}", access_key, secret_key],
             check=True,
             capture_output=True
         )
         
         # Get folders in drive bucket
         result = subprocess.run(
-            ["mc", "ls", f"{site_name}/drive", "--json"],
+            [mc_path, "ls", f"{site_name}/drive", "--json"],
             check=True,
             capture_output=True,
             text=True
@@ -1023,45 +1120,69 @@ def get_folder_count(request, site):
         return JsonResponse({"count": len(folders), "folders": folders})
     except subprocess.CalledProcessError as e:
         error_message = f"Error executing MinIO command: {e.stderr}"
+        logger.error(error_message)
         return JsonResponse({"error": error_message}, status=500)
     except Exception as e:
+        logger.exception(f"Unexpected error in get_folder_count: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
 def check_mc_installed(request):
     """Check if MinIO client (mc) is installed and download if needed"""
+    logger.info("Checking if MinIO client is installed")
     try:
-        # Check if mc is installed
-        subprocess.run(["mc", "--version"], check=True, capture_output=True)
-        return JsonResponse({"status": "installed"})
-    except:
-        try:
-            # Download mc for the appropriate platform
-            platform = os.name
-            if platform == 'posix':
-                # Linux or macOS
-                if os.uname().sysname == 'Darwin':
-                    # macOS
-                    url = "https://dl.min.io/client/mc/release/darwin-amd64/mc"
-                else:
-                    # Linux
-                    url = "https://dl.min.io/client/mc/release/linux-amd64/mc"
-            else:
-                # Windows
-                url = "https://dl.min.io/client/mc/release/windows-amd64/mc.exe"
-            
-            # Download mc
+        # Check if mc is already downloaded
+        mc_path = None
+        if os.name == 'nt':  # Windows
+            mc_path = os.path.join(os.getcwd(), "mc.exe")
+        else:
             mc_path = os.path.join(os.getcwd(), "mc")
-            if platform != 'posix':
-                mc_path += ".exe"
-                
-            subprocess.run(["curl", "-o", mc_path, url], check=True)
             
-            # Make executable
-            if platform == 'posix':
-                subprocess.run(["chmod", "+x", mc_path], check=True)
-                
+        if os.path.exists(mc_path):
+            logger.info(f"MinIO client already exists at {mc_path}")
+            if os.name == 'posix':
+                os.chmod(mc_path, 0o755)  # Make executable on Unix systems
             return JsonResponse({"status": "installed", "path": mc_path})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+        
+        # If we're here, we need to download the client
+        logger.info("Downloading MinIO client...")
+        
+        # Determine platform and URL
+        if os.name == 'posix':
+            # Linux or macOS
+            if platform.system() == 'Darwin':
+                # macOS
+                url = "https://dl.min.io/client/mc/release/darwin-amd64/mc"
+            else:
+                # Linux
+                url = "https://dl.min.io/client/mc/release/linux-amd64/mc"
+            download_path = mc_path
+        else:
+            # Windows
+            url = "https://dl.min.io/client/mc/release/windows-amd64/mc.exe"
+            download_path = mc_path
+        
+        logger.info(f"Downloading from {url} to {download_path}")
+        
+        # Use requests instead of subprocess for better cross-platform compatibility
+        import requests
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        with open(download_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        # Make executable on Unix systems
+        if os.name == 'posix':
+            os.chmod(download_path, 0o755)
+            
+        logger.info(f"MinIO client downloaded successfully to {download_path}")
+        return JsonResponse({"status": "installed", "path": download_path})
+    except Exception as e:
+        logger.exception(f"Error checking/installing mc: {str(e)}")
+        return JsonResponse({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }, status=500)
 
 
