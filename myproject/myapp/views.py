@@ -920,9 +920,9 @@ def get_minio_info(request, site):
         
         # Set alias for the site
         if site_name == "site1":
-            endpoint = os.environ.get('SITE1_MINIO_ENDPOINT', 'site1-minio1-1:9000')
+            endpoint = os.environ.get('SITE1_MINIO_ENDPOINT', 'localhost:9000')
         else:
-            endpoint = os.environ.get('SITE2_MINIO_ENDPOINT', 'site2-minio1-1:9000')
+            endpoint = os.environ.get('SITE2_MINIO_ENDPOINT', 'localhost:9000')
             
         access_key = os.environ.get('AWS_ACCESS_KEY_ID', 'admin')
         secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'admin123')

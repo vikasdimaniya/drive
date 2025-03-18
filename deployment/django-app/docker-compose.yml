@@ -25,6 +25,7 @@ services:
       - DOMAIN=${DOMAIN:-drive.aqlio.com}
       # MinIO site endpoints for monitoring
       - SITE1_MINIO_ENDPOINT=site1-minio1-1:9000
+      - SITE2_MINIO_ENDPOINT=site2-minio1-1:9000
     volumes:
       - ../../myproject/myapp/static:/app/myproject/myapp/static
     ports:
